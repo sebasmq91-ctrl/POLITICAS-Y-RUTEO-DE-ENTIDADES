@@ -478,6 +478,56 @@ thead th:last-child{border-radius:0 8px 0 0}
 .cap-load-btn{display:inline-block;background:var(--cx);color:#fff;font-weight:700;font-size:13px;padding:9px 14px;border-radius:8px;cursor:pointer}
 .cap-load-btn input{display:none}
 .cap-load small{display:block;font-size:11.5px;color:#4B5563;margin-top:6px;line-height:1.4}
+
+/* Resultado escogido: ventana, impresión y PDF */
+.cap-sel-btn{display:block;margin-top:8px;background:var(--cx);color:#fff;border:0;border-radius:7px;padding:6px 12px;font-size:12.5px;font-weight:700;cursor:pointer;font-family:inherit}
+.cap-sel-btn:hover{background:var(--cx-d)}
+.cap-modal{position:fixed;inset:0;background:rgba(15,23,42,.55);z-index:1000;display:none;align-items:flex-start;justify-content:center;overflow-y:auto;padding:24px 12px}
+.cap-modal.open{display:flex}
+.cap-modal-box{background:#F3F4F6;border-radius:14px;width:100%;max-width:820px;box-shadow:0 20px 50px rgba(0,0,0,.3)}
+.cap-modal-bar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;padding:12px 16px;border-bottom:1px solid #E5E7EB}
+.cap-modal-bar b{flex:1;font-size:15px;color:var(--dark);min-width:160px}
+.cap-modal-bar button{border:0;border-radius:7px;padding:8px 14px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit}
+.cap-bt-pri{background:var(--cx);color:#fff}.cap-bt-sec{background:#1E2D3D;color:#fff}.cap-bt-cer{background:#fff;color:#374151;border:1px solid #CBD5E0 !important}
+.cap-modal-cli{display:grid;grid-template-columns:2fr 1fr 1fr;gap:10px;padding:12px 16px}
+.cap-modal-cli label{display:flex;flex-direction:column;gap:3px;font-size:12px;font-weight:700;color:#374151}
+.cap-modal-cli input{padding:8px 10px;border:1.5px solid #CBD5E0;border-radius:7px;font-size:14px;font-family:inherit;width:100%}
+.cap-modal-cli small{grid-column:1/-1;font-size:11.5px;color:#6B7280}
+.cap-hoja{background:#fff;margin:0 16px 16px;border-radius:10px;padding:26px 30px;color:#1F2937;font-size:13px}
+.ch-head{display:flex;align-items:center;gap:14px;border-bottom:3px solid var(--cx);padding-bottom:12px}
+.ch-head img{height:46px;width:auto}
+.ch-head div{flex:1}.ch-head h2{font-size:17px;color:var(--dark);margin:0}.ch-head p{font-size:11.5px;color:#6B7280;margin:2px 0 0}
+.ch-cli{display:grid;grid-template-columns:2fr 1fr 1fr;gap:10px;margin:14px 0;font-size:12.5px}
+.ch-cli span{display:block;font-size:10.5px;color:#6B7280;font-weight:700;text-transform:uppercase;letter-spacing:.3px}
+.ch-cli b{display:block;min-height:18px;border-bottom:1px solid #D1D5DB;padding-bottom:2px}
+.ch-ent{display:flex;align-items:center;gap:14px;border:2px solid var(--cx);background:#F0FDFA;border-radius:10px;padding:12px 14px;margin-bottom:14px}
+.ch-ent .cmp-logo-box{flex-shrink:0}
+.ch-ent strong{display:block;font-size:17px;color:var(--dark)}.ch-ent em{font-style:normal;font-size:12.5px;color:#374151;font-weight:600}
+.ch-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.ch-item{border:1px solid #E5E7EB;border-radius:8px;padding:9px 11px}
+.ch-item span{display:block;font-size:10.5px;color:#6B7280;font-weight:700;text-transform:uppercase;letter-spacing:.3px}
+.ch-item b{display:block;font-size:16px;color:var(--dark);margin-top:3px}
+.ch-item small{display:block;font-size:10.5px;color:#6B7280;margin-top:2px;line-height:1.35}
+.ch-item.dest{grid-column:span 3;background:#ECFDF5;border-color:#6EE7B7}.ch-item.dest b{font-size:22px;color:#065F46}
+.ch-sec{margin-top:14px}.ch-sec h3{font-size:12px;text-transform:uppercase;letter-spacing:.4px;color:var(--cx-d);margin:0 0 6px}
+.cap-hoja .ch-tab{width:100%;min-width:0;border-collapse:collapse;border-spacing:0;padding:0;font-size:12.5px}.cap-hoja .ch-tab td,.cap-hoja .ch-tab th{border-bottom:1px solid #E5E7EB;padding:5px 6px;text-align:left;border-radius:0}.cap-hoja .ch-tab th{position:static;background:none;color:#6B7280;font-size:10.5px;font-weight:700;letter-spacing:.3px;text-transform:uppercase}
+.cap-hoja .ch-tab td:last-child,.cap-hoja .ch-tab th:last-child{text-align:right;white-space:nowrap}
+.ch-nota{margin-top:6px;font-size:11.5px;color:#92400E;background:#FFFBEB;border:1px solid #FDE68A;border-radius:6px;padding:6px 9px}
+.ch-pie{margin-top:16px;border-top:1px solid #E5E7EB;padding-top:8px;font-size:10.5px;color:#6B7280;line-height:1.5}
+@media (max-width:640px){.cap-modal-cli,.ch-cli{grid-template-columns:1fr}.ch-grid{grid-template-columns:1fr 1fr}.ch-item.dest{grid-column:span 2}.cap-hoja{padding:16px;margin:0 8px 8px}}
+.cap-hoja.ch-pdf .ch-grid{grid-template-columns:repeat(3,1fr)}.cap-hoja.ch-pdf .ch-item.dest{grid-column:span 3}.cap-hoja.ch-pdf .ch-cli{grid-template-columns:2fr 1fr 1fr}
+@media print{
+  @page{size:letter;margin:12mm}
+  body.cap-imprimiendo>*{display:none !important}
+  body.cap-imprimiendo>#cap-modal{display:block !important;position:static;background:none;padding:0;overflow:visible}
+  body.cap-imprimiendo .cap-modal-box{box-shadow:none;background:none;max-width:none}
+  body.cap-imprimiendo .cap-modal-bar,body.cap-imprimiendo .cap-modal-cli{display:none !important}
+  body.cap-imprimiendo .cap-hoja{margin:0;padding:0}
+  body.cap-imprimiendo .ch-grid{grid-template-columns:repeat(3,1fr)}
+  body.cap-imprimiendo .ch-item.dest{grid-column:span 3}
+  body.cap-imprimiendo .ch-cli{grid-template-columns:2fr 1fr 1fr}
+  body.cap-imprimiendo *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+}
 .cap-leido{margin-top:10px;font-size:12.5px;color:#374151;line-height:1.5}
 .cap-leido b{color:var(--dark)}
 .cap-desc{display:flex;align-items:flex-start;gap:8px;padding:6px 0;border-top:1px solid #D0E8E8}
@@ -1848,6 +1898,7 @@ function capCalcular(){
   ok.sort((a,b)=> orden==='desembolso' ? b.desembolso-a.desembolso : (posE(a.entidad)-posE(b.entidad)) || (a._i-b._i));
   const maxD = Math.max(...ok.map(f=>f.desembolso));
   const mal = filas.filter(f=>f.error);
+  capUltimo = {c, ok, baseTxt};
   if(!filas.length){ box.innerHTML = '<div class="cap-pend">Ninguna entidad con liquidador cargado atiende este caso todavía.</div>'; }
   else box.innerHTML = `<div class="cmp-wrap"><table class="cmp-table cmp-res"><thead><tr><th>Entidad y producto</th><th>Cuota y tasa</th><th>Monto del crédito</th><th>Costos del crédito</th><th>Desembolso estimado</th></tr></thead><tbody>
     ${ok.concat(mal).map(f=>`<tr><td class="cmp-ent"><div class="cmp-name" style="border-left:4px solid ${ENT_COLS[f.entidad]||'#1E2D3D'}">${logoEntidad(f.entidad)}<div><strong class="cmp-ent-nom">${f.entidad}</strong><div class="cap-prod">${f.nombre}</div>
@@ -1855,7 +1906,7 @@ function capCalcular(){
       ${f.error?'<td colspan="4" style="color:#9CA3AF">No aplica</td>':`<td style="white-space:nowrap"><span class="cmp-monto">${capPesos(f.cuota)}</span><div class="cmp-razon">${capPct(f.tasa)} M.V. · ${f.plazo} meses</div></td>
       <td style="white-space:nowrap"><span class="cmp-monto">${capPesos(f.monto)}</span></td>
       <td style="white-space:nowrap">${capPesos(f.costos)}<div class="cmp-razon">${f.costosTxt||'Fianza, estudio y otros'}</div></td>
-      <td style="white-space:nowrap"><span class="cap-desemb">${capPesos(f.desembolso)}</span>${!f.error && ok.length>1 && f.desembolso===maxD?'<div class="cap-top">Mayor desembolso</div>':''}${c.compras?`<div class="cmp-razon">Ya descontadas compras por ${capPesos(c.compras)}</div>`:''}</td>`}</tr>`).join('')}
+      <td style="white-space:nowrap"><span class="cap-desemb">${capPesos(f.desembolso)}</span>${!f.error && ok.length>1 && f.desembolso===maxD?'<div class="cap-top">Mayor desembolso</div>':''}${c.compras?`<div class="cmp-razon">Ya descontadas compras por ${capPesos(c.compras)}</div>`:''}<button class="cap-sel-btn" onclick="capSeleccionar(${ok.indexOf(f)})">Seleccionar</button></td>`}</tr>`).join('')}
     </tbody></table></div>`;
   // Entidades que atienden la pagaduría pero aún no tienen liquidador.
   const conLiq = ['VALORENZ','SERFINANZA','BAN100','BANCO PICHINCHA','SUDAMERIS','BANCO DE BOGOTÁ','SUEÑOS','VANTAGE','FINTRA'];
@@ -1865,6 +1916,90 @@ function capCalcular(){
     + (capDescLeidos.some(d=>d.compra) && !c.compras ? `<div class="cap-aviso"><strong>Falta el saldo a recoger.</strong> Marcaste descuentos para comprar: escribe en "Compras de cartera o saneamientos" el saldo que se paga (sale de centrales o del certificado de deuda). Mientras tanto el desembolso no lo descuenta.</div>` : '')
     + `<div class="cap-aviso">Valores aproximados. El monto, la tasa y el perfil final los define el estudio de cada entidad.</div>`;
 }
+
+// ── RESULTADO ESCOGIDO: ventana, impresión y PDF ─────────────────────────────
+let capUltimo = null, capElegido = null;
+const H2P_URL = 'https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js';
+const capEsc = t => String(t==null?'':t).replace(/[&<>"]/g, ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[ch]));
+function capSeleccionar(i){
+  if(!capUltimo || !capUltimo.ok[i]) return;
+  capElegido = {f: capUltimo.ok[i], c: capUltimo.c, baseTxt: capUltimo.baseTxt, fecha: new Date()};
+  capPintarHoja();
+  document.getElementById('cap-modal').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+function capCerrarModal(){ document.getElementById('cap-modal').classList.remove('open'); document.body.style.overflow = ''; }
+function capPintarHoja(){
+  const {f, c, baseTxt, fecha} = capElegido;
+  const logo = (document.querySelector('.topbar-logo')||{}).src || '';
+  const fechaTxt = fecha.toLocaleDateString('es-CO', {day:'numeric', month:'long', year:'numeric'});
+  const pagTxt = CAP_PAG_NOMBRE[c.pag] + (c.pag==='fondos_priv' ? ' · '+c.fondo : '') + (c.pag==='sed' && c.sed ? ' · '+c.sed : '');
+  const it = (t, v, sub, cls) => `<div class="ch-item ${cls||''}"><span>${t}</span><b>${v}</b>${sub?`<small>${sub}</small>`:''}</div>`;
+  const compras = capDescLeidos.filter(d=>d.compra);
+  const avisos = [f.error, ...(f.avisos||[])].filter(Boolean);
+  document.getElementById('cap-hoja').innerHTML = `
+    <div class="ch-head">${logo?`<img src="${logo}" alt="Credixpertos">`:''}<div><h2>Resultado de capacidad y monto</h2><p>Uso interno · asesor y analista · ${fechaTxt}</p></div></div>
+    <div class="ch-cli"><div><span>Cliente</span><b id="ch-nom"></b></div><div><span>Cédula</span><b id="ch-ced"></b></div><div><span>Teléfono</span><b id="ch-tel"></b></div></div>
+    <div class="ch-ent">${logoEntidad(f.entidad)}<div><strong>${f.entidad}</strong><em>${capEsc(f.nombre)}</em></div></div>
+    <div class="ch-grid">
+      ${it('Desembolso neto estimado', capPesos(f.desembolso), c.compras ? 'Ya descontadas las compras de cartera y los costos' : 'Ya descontados los costos del crédito', 'dest')}
+      ${it('Monto del crédito', capPesos(f.monto))}
+      ${it('Cuota mensual', capPesos(f.cuota))}
+      ${it('Plazo', f.plazo+' meses')}
+      ${it('Tasa', capPct(f.tasa)+' M.V.')}
+      ${it('Costos del crédito', capPesos(f.costos), capEsc(f.costosTxt||'Fianza, estudio y otros'))}
+      ${c.compras ? it('Compras de cartera', capPesos(c.compras), 'Saldo a recoger') : compras.length ? it('Compras de cartera', 'Por definir', 'Falta el saldo a recoger: el desembolso todavía no lo descuenta') : it('Compras de cartera', capPesos(0), 'Sin compras')}
+      ${it('Capacidad disponible', capPesos(c.cap), baseTxt)}
+      ${it('Norma aplicada', c.norma==='minvital' ? 'Mínimo vital' : 'Ley 1527', c.norma==='minvital' ? 'SMMLV '+capPesos(SMMLV) : '50 % del ingreso neto de ley')}
+      ${it('Pagaduría', capEsc(pagTxt), c.edad+' años · ingreso '+capPesos(c.ingreso))}
+    </div>
+    ${compras.length ? `<div class="ch-sec"><h3>Créditos que se recogen con compra de cartera</h3>
+      <table class="ch-tab"><thead><tr><th>Crédito en colilla</th><th>Cuota</th></tr></thead><tbody>
+      ${compras.map(d=>`<tr><td>${capEsc(d.n)}${d.saldo?` <small style="color:#6B7280">· saldo ${capPesos(d.saldo)}</small>`:''}</td><td>${capPesos(d.v)}</td></tr>`).join('')}
+      <tr><td><b>Total cuotas que se liberan</b></td><td><b>${capPesos(compras.reduce((a,d)=>a+d.v,0))}</b></td></tr></tbody></table></div>` : ''}
+    ${avisos.length ? `<div class="ch-sec"><h3>Observaciones de la entidad</h3>${avisos.map(a=>`<div class="ch-nota">${a}</div>`).join('')}</div>` : ''}
+    <div class="ch-pie">Valores aproximados. El monto, la tasa y la aprobación final los define el estudio de la entidad.<br>Credixpertos · documento de uso interno, no se entrega al cliente.</div>`;
+  capPintarCliente();
+}
+function capPintarCliente(){
+  const set = (a,b) => { const el = document.getElementById(b); if(el) el.textContent = document.getElementById(a).value.trim(); };
+  set('ch-in-nom','ch-nom'); set('ch-in-ced','ch-ced'); set('ch-in-tel','ch-tel');
+}
+function capNombreArchivo(){
+  const {f, fecha} = capElegido;
+  const nom = document.getElementById('ch-in-nom').value.trim();
+  const limpio = t => normTxt(t).replace(/[^a-z0-9]+/g,'_').replace(/^_|_$/g,'');
+  return ['Credixpertos', limpio(f.entidad), nom ? limpio(nom) : '', fecha.toISOString().slice(0,10)].filter(Boolean).join('_') + '.pdf';
+}
+function capImprimir(){
+  document.body.classList.add('cap-imprimiendo');
+  const fin = () => { document.body.classList.remove('cap-imprimiendo'); window.removeEventListener('afterprint', fin); };
+  window.addEventListener('afterprint', fin);
+  window.print();
+  setTimeout(fin, 1000);
+}
+function capCargarH2P(){
+  if(window.html2pdf) return Promise.resolve(window.html2pdf);
+  return new Promise((ok,mal)=>{ const sc=document.createElement('script'); sc.src=H2P_URL;
+    sc.onload=()=>ok(window.html2pdf); sc.onerror=()=>mal(new Error('No se pudo cargar el generador de PDF. Revisa la conexión o usa Imprimir y elige "Guardar como PDF".'));
+    document.head.appendChild(sc); });
+}
+async function capDescargarPdf(){
+  const bt = document.getElementById('cap-bt-pdf'), txt = bt.textContent;
+  bt.disabled = true; bt.textContent = 'Generando...';
+  try{
+    const h2p = await capCargarH2P();
+    // Se copia la hoja fuera de la ventana emergente para que el PDF salga completo y sin corrimientos.
+    const copia = document.getElementById('cap-hoja').cloneNode(true);
+    copia.removeAttribute('id'); copia.querySelectorAll('[id]').forEach(el=>el.removeAttribute('id'));
+    copia.classList.add('ch-pdf'); copia.style.cssText = 'width:760px;margin:0;border-radius:0;padding:24px 28px;background:#fff';
+    await h2p().set({margin:[8,8,8,8], filename:capNombreArchivo(), image:{type:'jpeg', quality:0.95},
+      html2canvas:{scale:2, useCORS:true, backgroundColor:'#ffffff', scrollX:0, scrollY:0}, jsPDF:{unit:'mm', format:'letter', orientation:'portrait'},
+      pagebreak:{mode:['avoid-all']}}).from(copia).save();
+  }catch(e){ alert(e.message || 'No se pudo generar el PDF. Usa Imprimir y elige "Guardar como PDF".'); }
+  bt.disabled = false; bt.textContent = txt;
+}
+document.addEventListener('keydown', e=>{ if(e.key==='Escape' && document.getElementById('cap-modal').classList.contains('open')) capCerrarModal(); });
 
 function renderAll() {
   renderRuteo(); renderConsulta(); renderPolicies(); capCalcular();
@@ -2797,4 +2932,19 @@ wizRestaurarDesdeLink();
 window.addEventListener('hashchange', wizRestaurarDesdeLink);
 </script>
 
+<div class="cap-modal" id="cap-modal" onclick="if(event.target===this)capCerrarModal()">
+  <div class="cap-modal-box">
+    <div class="cap-modal-bar"><b>Resultado escogido</b>
+      <button class="cap-bt-pri" onclick="capImprimir()">Imprimir</button>
+      <button class="cap-bt-sec" id="cap-bt-pdf" onclick="capDescargarPdf()">Descargar PDF</button>
+      <button class="cap-bt-cer" onclick="capCerrarModal()">Cerrar</button></div>
+    <div class="cap-modal-cli">
+      <label>Nombre del cliente<input id="ch-in-nom" oninput="capPintarCliente()" autocomplete="off"></label>
+      <label>Cédula<input id="ch-in-ced" oninput="capPintarCliente()" inputmode="numeric" autocomplete="off"></label>
+      <label>Teléfono<input id="ch-in-tel" oninput="capPintarCliente()" inputmode="tel" autocomplete="off"></label>
+      <small>Estos datos solo salen en la hoja impresa o en el PDF. No se guardan.</small>
+    </div>
+    <div class="cap-hoja" id="cap-hoja"></div>
+  </div>
+</div>
 </body></html>
