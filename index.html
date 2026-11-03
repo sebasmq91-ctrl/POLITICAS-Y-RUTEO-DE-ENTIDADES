@@ -493,6 +493,10 @@ thead th:last-child{border-radius:0 8px 0 0}
 .cap-modal-cli label{display:flex;flex-direction:column;gap:3px;font-size:12px;font-weight:700;color:#374151}
 .cap-modal-cli input{padding:8px 10px;border:1.5px solid #CBD5E0;border-radius:7px;font-size:14px;font-family:inherit;width:100%}
 .cap-modal-cli small{grid-column:1/-1;font-size:11.5px;color:#6B7280}
+.cap-modal-cli .cap-obs-lbl{grid-column:1/-1}
+.cap-modal-cli textarea{padding:8px 10px;border:1.5px solid #CBD5E0;border-radius:7px;font-size:14px;font-family:inherit;width:100%;resize:vertical}
+.ch-obs{margin-top:14px;border:1.5px solid #F59E0B;background:#FFFBEB;border-radius:8px;padding:10px 12px;font-size:12.5px;color:#1F2937;white-space:pre-wrap;line-height:1.5}
+.ch-obs b{display:block;font-size:10.5px;color:#92400E;text-transform:uppercase;letter-spacing:.3px;margin-bottom:3px}
 .cap-hoja{background:#fff;margin:0 16px 16px;border-radius:10px;padding:26px 30px;color:#1F2937;font-size:13px}
 .ch-head{display:flex;align-items:center;gap:14px;border-bottom:3px solid var(--cx);padding-bottom:12px}
 .ch-head img{height:46px;width:auto}
@@ -1560,7 +1564,7 @@ async function capLeerColilla(file){
     capDescLeidos = r.lineas.map(d=>({...d, tipo: d.cuotas>=999 ? 'embargo' : capTipoConcepto(r.pagaduria, d.n), compra:false}));
     r.cliente = capDatosCliente(txt);
     capColillaInfo = r;
-    const ci = r.cliente; document.getElementById('ch-in-nom').value = ci.nombre; document.getElementById('ch-in-ced').value = capCedFmt(ci.cedula); document.getElementById('ch-in-tel').value = '';
+    const ci = r.cliente; document.getElementById('ch-in-nom').value = ci.nombre; document.getElementById('ch-in-ced').value = capCedFmt(ci.cedula); document.getElementById('ch-in-tel').value = ''; document.getElementById('ch-in-obs').value = '';
     capPintarLeido(); capAplicarDescuentos();
   }catch(e){ box.innerHTML = `<span class="cap-err">${e.message}</span>`; }
   document.getElementById('cap-file').value='';
@@ -2029,12 +2033,14 @@ function capPintarHoja(){
       ${compras.map(d=>`<tr><td>${capEsc(d.n)}${d.saldo?` <small style="color:#6B7280">· saldo ${capPesos(d.saldo)}</small>`:''}</td><td>${capPesos(d.v)}</td></tr>`).join('')}
       <tr><td><b>Total cuotas que se liberan</b></td><td><b>${capPesos(compras.reduce((a,d)=>a+d.v,0))}</b></td></tr></tbody></table></div>` : ''}
     ${avisos.length ? `<div class="ch-sec"><h3>Observaciones de la entidad</h3>${avisos.map(a=>`<div class="ch-nota">${a}</div>`).join('')}</div>` : ''}
+    <div class="ch-obs" id="ch-obs" style="display:none"><b>Observaciones del crédito</b><span id="ch-obs-txt"></span></div>
     <div class="ch-pie">Valores aproximados. El monto, la tasa y la aprobación final los define el estudio de la entidad.<br>Credixpertos · documento de uso interno, no se entrega al cliente.</div>`;
   capPintarCliente();
 }
 function capPintarCliente(){
   const set = (a,b) => { const el = document.getElementById(b); if(el) el.textContent = document.getElementById(a).value.trim(); };
-  set('ch-in-nom','ch-nom'); set('ch-in-ced','ch-ced'); set('ch-in-tel','ch-tel');
+  set('ch-in-nom','ch-nom'); set('ch-in-ced','ch-ced'); set('ch-in-tel','ch-tel'); set('ch-in-obs','ch-obs-txt');
+  const ob = document.getElementById('ch-obs'); if(ob) ob.style.display = document.getElementById('ch-in-obs').value.trim() ? '' : 'none';
 }
 function capNombreArchivo(){
   const {f, fecha} = capElegido;
@@ -3013,6 +3019,7 @@ window.addEventListener('hashchange', wizRestaurarDesdeLink);
       <label>Nombre del cliente<input id="ch-in-nom" oninput="capPintarCliente()" autocomplete="off"></label>
       <label>Cédula<input id="ch-in-ced" oninput="capPintarCliente()" inputmode="numeric" autocomplete="off"></label>
       <label>Teléfono<input id="ch-in-tel" oninput="capPintarCliente()" inputmode="tel" autocomplete="off"></label>
+      <label class="cap-obs-lbl">Observaciones del crédito<textarea id="ch-in-obs" rows="3" oninput="capPintarCliente()" placeholder="Ej.: validar certificado de deuda, conseguir carta de la pagaduría, confirmar score..."></textarea></label>
       <small>Estos datos solo salen en la hoja impresa o en el PDF. No se guardan.</small>
     </div>
     <div class="cap-hoja" id="cap-hoja"></div>
