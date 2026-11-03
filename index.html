@@ -478,6 +478,13 @@ thead th:last-child{border-radius:0 8px 0 0}
 .cap-load-btn{display:inline-block;background:var(--cx);color:#fff;font-weight:700;font-size:13px;padding:9px 14px;border-radius:8px;cursor:pointer}
 .cap-load-btn input{display:none}
 .cap-load small{display:block;font-size:11.5px;color:#4B5563;margin-top:6px;line-height:1.4}
+.cap-saldo{display:block;margin-top:6px;font-size:11.5px;font-weight:700;color:#065F46}
+.cap-desc .cap-saldo input{display:block;width:100%;height:auto;margin-top:3px;padding:6px 8px;border:1.5px solid #6EE7B7;border-radius:6px;font-size:14px;font-family:inherit;background:#fff}
+.cap-extra{display:grid;grid-template-columns:1fr 130px 30px;gap:6px;margin-bottom:6px}
+.cap-extra input{padding:7px 8px;border:1.5px solid #CBD5E0;border-radius:6px;font-size:13.5px;font-family:inherit;min-width:0;width:100%}
+.cap-extra button{border:1px solid #FCA5A5;background:#FEF2F2;color:#B91C1C;border-radius:6px;cursor:pointer;font-weight:700}
+.cap-add-btn{background:#fff;border:1.5px dashed var(--cx);color:var(--cx-d);border-radius:7px;padding:7px 10px;font-size:12.5px;font-weight:700;cursor:pointer;font-family:inherit;width:100%}
+#cap-compras[readonly]{background:#F3F4F6;font-weight:700}
 
 /* Resultado escogido: ventana, impresión y PDF */
 .cap-sel-btn{display:block;margin-top:8px;background:var(--cx);color:#fff;border:0;border-radius:7px;padding:6px 12px;font-size:12.5px;font-weight:700;cursor:pointer;font-family:inherit}
@@ -800,8 +807,12 @@ thead th:last-child{border-radius:0 8px 0 0}
         <small>Si lo dejas vacío, se usa el margen de cada entidad.</small></div>
       <div class="cap-f"><label>Ordenar resultados</label>
         <select id="cap-orden" onchange="capCalcular()"><option value="sugerido">Orden sugerido (matriz de ruteo)</option><option value="desembolso">Mayor desembolso</option></select></div>
-      <div class="cap-f"><label>Compras de cartera o saneamientos</label><input id="cap-compras" inputmode="numeric" placeholder="$ 0" oninput="capFmt(this)">
-        <small>Valor total que se paga con el crédito. Se descuenta del desembolso.</small></div>
+      <div class="cap-f"><label>Saneamientos y otras carteras (por fuera de la colilla)</label>
+        <div id="cap-extras"></div>
+        <button type="button" class="cap-add-btn" onclick="capAgregarExtra()">+ Agregar saneamiento o cartera</button>
+        <small>Para obligaciones que no salen en la colilla, o si no se cargó colilla. Cada una cuenta como una compra (un cheque).</small></div>
+      <div class="cap-f"><label>Total a recoger</label><input id="cap-compras" readonly placeholder="$ 0" tabindex="-1">
+        <small>Suma de los saldos de las carteras marcadas y de los saneamientos. Se descuenta del desembolso.</small></div>
     </div>
     <div class="cap-res">
       <div class="cap-kpis" id="cap-kpis"></div>
@@ -1562,6 +1573,7 @@ async function capLeerColilla(file){
     const el = document.getElementById('cap-ingreso'); el.value = r.ingreso ? '$ '+r.ingreso.toLocaleString('es-CO') : '';
     // 999 cuotas pendientes = descuento indefinido (así aparecen los embargos en CASUR).
     capDescLeidos = r.lineas.map(d=>({...d, tipo: d.cuotas>=999 ? 'embargo' : capTipoConcepto(r.pagaduria, d.n), compra:false}));
+    capExtras = []; capPintarExtras();
     r.cliente = capDatosCliente(txt);
     capColillaInfo = r;
     const ci = r.cliente; document.getElementById('ch-in-nom').value = ci.nombre; document.getElementById('ch-in-ced').value = capCedFmt(ci.cedula); document.getElementById('ch-in-tel').value = ''; document.getElementById('ch-in-obs').value = '';
@@ -1580,20 +1592,44 @@ function capPintarLeido(){
     ${r.otrosDev.length?'<br>Otros devengados (no suman al ingreso): '+r.otrosDev.map(d=>d.n+' '+capPesos(d.v)).join(', '):''}
     ${emb.length?`<div class="cap-err" style="margin-top:6px">Embargo en colilla: ${emb.map(d=>d.n).join(', ')}</div>`:''}
     <div style="margin-top:6px"><b>Descuentos.</b> Revisa el tipo de cada uno y marca los créditos que se recogen con compra de cartera:</div>
-    ${capDescLeidos.map((d,i)=>`<div class="cap-desc"><input type="checkbox" title="Se compra" ${d.compra?'checked':''} ${d.tipo==='libranza'?'':'disabled'} onchange="capDescLeidos[${i}].compra=this.checked;capAplicarDescuentos()">
+    ${capDescLeidos.map((d,i)=>`<div class="cap-desc"><input type="checkbox" title="Se compra" ${d.compra?'checked':''} ${d.tipo==='libranza'?'':'disabled'} onchange="capMarcarCompra(${i},this.checked)">
       <span>${d.n}${d.cuotas?`<br><small>${d.cuotas} cuotas pendientes</small>`:''}${d.saldo?`<br><small>Saldo ${capPesos(d.saldo)}</small>`:''}${d.unaVez?'<br><small>Solo aparece en este mes</small>':''}
-      <select onchange="capDescLeidos[${i}].tipo=this.value;if(this.value!=='libranza')capDescLeidos[${i}].compra=false;capPintarLeido();capAplicarDescuentos()">${Object.entries(TIPOS_DESC).map(([k,v])=>`<option value="${k}" ${d.tipo===k?'selected':''}>${v}</option>`).join('')}</select></span>
+      <select onchange="capDescLeidos[${i}].tipo=this.value;if(this.value!=='libranza')capDescLeidos[${i}].compra=false;capPintarLeido();capAplicarDescuentos()">${Object.entries(TIPOS_DESC).map(([k,v])=>`<option value="${k}" ${d.tipo===k?'selected':''}>${v}</option>`).join('')}</select>
+      ${d.compra?`<label class="cap-saldo">Saldo a recoger<input inputmode="numeric" placeholder="$ 0" value="${d.saldoCompra?'$ '+Math.round(d.saldoCompra).toLocaleString('es-CO'):''}" oninput="capSaldoItem(${i},this)"></label>`:''}</span>
       <em>${capPesos(d.v)}</em></div>`).join('') || 'No tiene descuentos.'}`;
 }
+// Compras de cartera: saldo por cada crédito marcado en la colilla + saneamientos u otras carteras por fuera.
+let capExtras = [];
+const capFmtPesos = v => v ? '$ '+Math.round(v).toLocaleString('es-CO') : '';
+function capMarcarCompra(i, on){
+  const d = capDescLeidos[i]; d.compra = on;
+  if(on && !d.saldoCompra && d.saldo) d.saldoCompra = d.saldo;
+  capPintarLeido(); capAplicarDescuentos();
+}
+function capSaldoItem(i, inp){
+  const v = parseInt(inp.value.replace(/[^\d]/g,''),10) || 0;
+  capDescLeidos[i].saldoCompra = v; inp.value = capFmtPesos(v); capTotalCompras();
+}
+function capAgregarExtra(){ capExtras.push({n:'', v:0}); capPintarExtras(); const ins = document.querySelectorAll('#cap-extras .cap-extra input'); if(ins.length>1) ins[ins.length-2].focus(); }
+function capQuitarExtra(i){ capExtras.splice(i,1); capPintarExtras(); capTotalCompras(); }
+function capExtraNombre(i, inp){ capExtras[i].n = inp.value; }
+function capExtraValor(i, inp){ const v = parseInt(inp.value.replace(/[^\d]/g,''),10) || 0; capExtras[i].v = v; inp.value = capFmtPesos(v); capTotalCompras(); }
+function capPintarExtras(){
+  const box = document.getElementById('cap-extras'); if(!box) return;
+  box.innerHTML = capExtras.map((x,i)=>`<div class="cap-extra"><input placeholder="Entidad u obligación" value="${capEsc(x.n)}" oninput="capExtraNombre(${i},this)"><input inputmode="numeric" placeholder="Saldo $ 0" value="${capFmtPesos(x.v)}" oninput="capExtraValor(${i},this)"><button type="button" title="Quitar" onclick="capQuitarExtra(${i})">x</button></div>`).join('');
+}
+function capNumCompras(){ return capDescLeidos.filter(d=>d.compra && d.saldoCompra>0).length + capExtras.filter(x=>x.v>0).length; }
+function capTotalCompras(){
+  const t = capDescLeidos.filter(d=>d.compra).reduce((a,d)=>a+(d.saldoCompra||0),0) + capExtras.reduce((a,x)=>a+(x.v||0),0);
+  document.getElementById('cap-compras').value = capFmtPesos(t);
+  capCalcular();
+}
+
 function capAplicarDescuentos(){
   const fmt = v => v ? '$ '+Math.round(v).toLocaleString('es-CO') : '';
   document.getElementById('cap-ley').value = fmt(capDescLeidos.filter(d=>d.tipo==='ley').reduce((a,d)=>a+d.v,0));
   document.getElementById('cap-actuales').value = fmt(capDescLeidos.filter(d=>d.tipo!=='ley' && !d.compra).reduce((a,d)=>a+d.v,0));
-  // Si la colilla trae el saldo de los créditos marcados para compra, se llena solo el valor a recoger.
-  const marc = capDescLeidos.filter(d=>d.compra);
-  if(marc.length && marc.every(d=>d.saldo)) document.getElementById('cap-compras').value = fmt(marc.reduce((a,d)=>a+d.saldo,0));
-  else if(!marc.length && capDescLeidos.some(d=>d.saldo)) document.getElementById('cap-compras').value = '';
-  capCalcular();
+  capTotalCompras();
 }
 
 
@@ -1707,14 +1743,15 @@ const LIQ_SUD = {
   },
   estudio:665210, transferencia:46670, edadMax:75, montoMax:320000000,
   // compra de cartera: 2 meses de interés a la tasa de la línea y costo del cheque, sobre el monto total de compra (caso real nov 2026)
-  mesesCausados:2, cheque:0.0081073, margen:{casur:10000}
+  // monto total de compra = saldo + 4x1000 + estudio + (transferencia + 22.700) por cheque; intereses causados = 2 meses sobre ese total
+  mesesCausados:2, gmfCompra:0.004, porCheque:69370, margen:{casur:10000}
 };
 function capSudameris(c){
   const L = LIQ_SUD, e = loadData().pols.find(x=>x.entidad==='SUDAMERIS');
   if(!e || e.activa===false) return [];
   if(c.pag==='fondos_priv' ? !normTxt(e.pagadurias).includes(normTxt(c.fondo)) : !capSirve(e, c.pag)) return [];
   const margen = c.margen!=null ? c.margen : (L.margen[c.pag]||0);
-  const base0 = {entidad:'SUDAMERIS', margen, costosTxt: c.compras>0 ? 'Estudio, transferencia, intereses causados y cheque de la compra' : 'Estudio de crédito y transferencia'};
+  const base0 = {entidad:'SUDAMERIS', margen, costosTxt: c.compras>0 ? 'Estudio, transferencias, 4x1000 de la compra e intereses causados' : 'Estudio de crédito y transferencia'};
   const docente = c.pag==='sed';
   if(docente && c.contrato!=='propiedad') return [{...base0, nombre:'Banco Sudameris', error:'En docentes solo atiende propiedad.'}];
   const eMax = docente ? (e.edad_max_docente||65) : L.edadMax;
@@ -1741,9 +1778,11 @@ function capSudameris(c){
     if(c.rep==='alto' && e.aviso_reporte) avisos.push(e.aviso_reporte);
     let costos = L.estudio + L.transferencia;
     if(c.compras>0){
-      const total = c.compras/(1 - L.mesesCausados*ln.tasa - L.cheque);
-      costos += total - c.compras;
-      avisos.push('Compra de cartera: monto total de compra '+capPesos(total)+' (incluye '+L.mesesCausados+' meses de intereses causados y el costo del cheque).');
+      const cheques = Math.max(1, capNumCompras());
+      const total = c.compras*(1+L.gmfCompra) + L.estudio + cheques*L.porCheque;
+      const causados = total*ln.tasa*L.mesesCausados;
+      costos = total - c.compras + causados;
+      avisos.push('Compra de cartera ('+cheques+' cheque'+(cheques>1?'s':'')+'): monto total de compra '+capPesos(total)+' más '+capPesos(causados)+' de intereses causados ('+L.mesesCausados+' meses).');
     }
     out.push({...base0, nombre:'Sudameris · '+nom, cuota:cuotaUsada, tasa:ln.tasa, plazo:n, monto, costos, desembolso: monto - costos - c.compras, avisos});
   }
@@ -1988,7 +2027,7 @@ function capCalcular(){
   const {pols} = loadData();
   const pend = pols.filter(e=>e.activa!==false && !conLiq.includes(e.entidad) && capSirve(e, pag)).map(e=>e.entidad);
   document.getElementById('cap-pend').innerHTML = (pend.length?`<div class="cap-pend"><strong>Liquidador pendiente:</strong> ${pend.join(', ')}. Estas entidades también atienden ${CAP_PAG_NOMBRE[pag]}, pero todavía no calculan monto aquí.</div>`:'')
-    + (capDescLeidos.some(d=>d.compra) && !c.compras ? `<div class="cap-aviso"><strong>Falta el saldo a recoger.</strong> Marcaste descuentos para comprar: escribe en "Compras de cartera o saneamientos" el saldo que se paga (sale de centrales o del certificado de deuda). Mientras tanto el desembolso no lo descuenta.</div>` : '')
+    + (capDescLeidos.some(d=>d.compra && !d.saldoCompra) ? `<div class="cap-aviso"><strong>Falta el saldo a recoger de: ${capDescLeidos.filter(d=>d.compra && !d.saldoCompra).map(d=>capEsc(d.n)).join(', ')}.</strong> Escríbelo debajo de cada crédito marcado (sale de centrales o del certificado de deuda). Mientras tanto el desembolso no lo descuenta.</div>` : '')
     + `<div class="cap-aviso">Valores aproximados. El monto, la tasa y el perfil final los define el estudio de cada entidad.</div>`;
 }
 
@@ -2010,7 +2049,7 @@ function capPintarHoja(){
   const fechaTxt = fecha.toLocaleDateString('es-CO', {day:'numeric', month:'long', year:'numeric'});
   const pagTxt = CAP_PAG_NOMBRE[c.pag] + (c.pag==='fondos_priv' ? ' · '+c.fondo : '') + (c.pag==='sed' && c.sed ? ' · '+c.sed : '');
   const it = (t, v, sub, cls) => `<div class="ch-item ${cls||''}"><span>${t}</span><b>${v}</b>${sub?`<small>${sub}</small>`:''}</div>`;
-  const compras = capDescLeidos.filter(d=>d.compra);
+  const compras = capDescLeidos.filter(d=>d.compra), extras = capExtras.filter(x=>x.v>0);
   const avisos = [f.error, ...(f.avisos||[])].filter(Boolean);
   document.getElementById('cap-hoja').innerHTML = `
     <div class="ch-head">${logo?`<img src="${logo}" alt="Credixpertos">`:''}<div><h2>Resultado de capacidad y monto</h2><p>Uso interno · asesor y analista · ${fechaTxt}</p></div></div>
@@ -2023,15 +2062,16 @@ function capPintarHoja(){
       ${it('Plazo', f.plazo+' meses')}
       ${it('Tasa', capPct(f.tasa)+' M.V.')}
       ${it('Costos del crédito', capPesos(f.costos), capEsc(f.costosTxt||'Fianza, estudio y otros'))}
-      ${c.compras ? it('Compras de cartera', capPesos(c.compras), 'Saldo a recoger') : compras.length ? it('Compras de cartera', 'Por definir', 'Falta el saldo a recoger: el desembolso todavía no lo descuenta') : it('Compras de cartera', capPesos(0), 'Sin compras')}
+      ${compras.some(d=>!d.saldoCompra) ? it('Compras y saneamientos', c.compras ? capPesos(c.compras) : 'Por definir', 'Falta el saldo de alguna cartera: el desembolso todavía no la descuenta') : c.compras ? it('Compras y saneamientos', capPesos(c.compras), 'Total a recoger') : it('Compras y saneamientos', capPesos(0), 'Sin compras')}
       ${it('Capacidad disponible', capPesos(c.cap), baseTxt)}
       ${it('Norma aplicada', c.norma==='minvital' ? 'Mínimo vital' : 'Ley 1527', c.norma==='minvital' ? 'SMMLV '+capPesos(SMMLV) : '50 % del ingreso neto de ley')}
       ${it('Pagaduría', capEsc(pagTxt), c.edad+' años · ingreso '+capPesos(c.ingreso))}
     </div>
-    ${compras.length ? `<div class="ch-sec"><h3>Créditos que se recogen con compra de cartera</h3>
-      <table class="ch-tab"><thead><tr><th>Crédito en colilla</th><th>Cuota</th></tr></thead><tbody>
-      ${compras.map(d=>`<tr><td>${capEsc(d.n)}${d.saldo?` <small style="color:#6B7280">· saldo ${capPesos(d.saldo)}</small>`:''}</td><td>${capPesos(d.v)}</td></tr>`).join('')}
-      <tr><td><b>Total cuotas que se liberan</b></td><td><b>${capPesos(compras.reduce((a,d)=>a+d.v,0))}</b></td></tr></tbody></table></div>` : ''}
+    ${compras.length || extras.length ? `<div class="ch-sec"><h3>Carteras y saneamientos que se recogen</h3>
+      <table class="ch-tab"><thead><tr><th>Obligación</th><th style="text-align:right">Cuota en colilla</th><th>Saldo a recoger</th></tr></thead><tbody>
+      ${compras.map(d=>`<tr><td>${capEsc(d.n)}</td><td style="text-align:right">${capPesos(d.v)}</td><td>${d.saldoCompra?capPesos(d.saldoCompra):'Por definir'}</td></tr>`).join('')}
+      ${extras.map(x=>`<tr><td>${capEsc(x.n||'Saneamiento')} <small style="color:#6B7280">· por fuera de la colilla</small></td><td style="text-align:right">—</td><td>${capPesos(x.v)}</td></tr>`).join('')}
+      <tr><td><b>Total</b></td><td style="text-align:right"><b>${compras.length?capPesos(compras.reduce((a,d)=>a+d.v,0)):'—'}</b></td><td><b>${capPesos(c.compras||0)}</b></td></tr></tbody></table></div>` : ''}
     ${avisos.length ? `<div class="ch-sec"><h3>Observaciones de la entidad</h3>${avisos.map(a=>`<div class="ch-nota">${a}</div>`).join('')}</div>` : ''}
     <div class="ch-obs" id="ch-obs" style="display:none"><b>Observaciones del crédito</b><span id="ch-obs-txt"></span></div>
     <div class="ch-pie">Valores aproximados. El monto, la tasa y la aprobación final los define el estudio de la entidad.<br>Credixpertos · documento de uso interno, no se entrega al cliente.</div>`;
