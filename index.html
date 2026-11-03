@@ -1484,20 +1484,51 @@ function capParseProteccion(lineasTxt){
     aviso: cuadra ? '' : 'Los totales leídos no cuadran con la suma de los conceptos: revisa los valores contra la colilla.'};
 }
 
+// Nombre y cédula del cliente según el formato de la colilla. Solo se muestran en pantalla; no se guardan.
+function capDatosCliente(lineas){
+  const L = lineas.map(l=>String(l).replace(/\s+/g,' ').trim()), todo = L.join(' ');
+  let nom = '', ced = '', m;
+  const prueba = [
+    [/Nombre Completo:\s*(.+?)\s+Tipo y N[uú]mero de Identificaci[oó]n:\s*(?:[A-Z]{1,3}\.?\s*)?([\d.]{6,14})/i, 1, 2],
+    [/se[ñn]or\s*\(a\)\s+(.+?)\s+identificad[oa]\s*\(a\)\s+con\s+(?:la\s+)?(?:tipo de documento\s+)?C[eé]dula de Ciudadan[ií]a\s+(?:No\.?\s*|n[uú]mero\s*)?([\d.]{6,14})/i, 1, 2],
+    [/\bNombre\s+([A-ZÁÉÍÓÚÑ][A-ZÁÉÍÓÚÑ ]{4,}?)\s+Documento\s+(\d{6,11})/, 1, 2],
+    [/ASEGURADO\/PENSIONADO:\s*[A-Z]?(\d{5,11})\s*-\s*([A-ZÁÉÍÓÚÑ][A-ZÁÉÍÓÚÑ ]+?)(?=\s+(?:Concepto|[A-Z][a-z])|$)/, 2, 1]
+  ];
+  for(const [re,iN,iC] of prueba){ if((m = todo.match(re))){ nom = m[iN]; ced = m[iC]; break; } }
+  if(!ced){
+    for(let k=0;k<L.length;k++){
+      const l = L[k];
+      if((m = l.match(/^Titular:\s*(.+?)(?:\s+Mes:.*)?$/))) nom = nom || m[1];
+      if((m = l.match(/^Documento:\s*(\d{5,11})/))) ced = ced || m[1];
+      if((m = l.match(/^Nombre:\s*(?:\S{1,4}\s+-\s+)?(.+)$/))) nom = nom || m[1];
+      if((m = l.match(/N[uú]mero:\s*(\d{5,11})\s*$/)) && /C[oó]digo Militar/i.test(l)) ced = ced || m[1];
+      if(/^COMPA[ÑN][IÍ]A\b.*\bNOMBRE$/.test(l) && L[k+1] && (m = L[k+1].match(/\d{6,}-\d\s+(.+)$/))) nom = nom || m[1];
+      if(/^PER[IÍ]ODO\b.*\bDOCUMENTO\b/.test(l) && L[k+1] && (m = L[k+1].match(/HASTA\s+\S+\s+(\d{6,11})/))) ced = ced || m[1];
+      if(/Identificaci[oó]n\s+Nombre Pensionado/i.test(l) && L[k+1] && (m = L[k+1].match(/^\S{1,3}\s+(\d{6,11})\s+(.+)$/))){ ced = ced || m[1]; nom = nom || m[2]; }
+    }
+  }
+  ced = (ced||'').replace(/\D/g,'');
+  nom = (nom||'').replace(/\s*,\s*$/,'').replace(/^(?:[A-Z]{1,2}\d?\.?|[A-Z]\d)\s+(?:-\s+)?/,'').trim();
+  const min = new Set(['de','del','la','las','los','y']);
+  nom = nom.toLowerCase().split(' ').filter(Boolean).map((w,i)=> i && min.has(w) ? w : w.charAt(0).toUpperCase()+w.slice(1)).join(' ');
+  return { nombre: nom.length>=5 ? nom : '', cedula: ced.length>=5 ? ced : '' };
+}
+const capCedFmt = c => c ? parseInt(c,10).toLocaleString('es-CO') : '';
+
 async function capLeerColilla(file){
   const box = document.getElementById('cap-leido'); if(!file) return;
   box.className='cap-leido'; box.innerHTML='Leyendo la colilla...';
   try{
-    let r = null, lineas = [], todo = '';
+    let r = null, lineas = [], todo = '', txt = [];
     if(/^image\//.test(file.type)){
       box.innerHTML='Leyendo la imagen con reconocimiento de texto (puede tardar unos segundos)...';
-      const lo = await capOcr(file); r = capParseHumano(lo) || capParseFopep(lo) || capParseProteccion(lo);
+      const lo = await capOcr(file); txt = lo; r = capParseHumano(lo) || capParseFopep(lo) || capParseProteccion(lo);
     } else {
       lineas = await capLineasPdf(file);
-      todo = lineas.map(capTxt).join(' ');
+      todo = lineas.map(capTxt).join(' '); txt = lineas.map(capTxt);
       if(!lineas.length || todo.replace(/[^A-Za-z]/g,'').length<40){
         box.innerHTML='La colilla es una imagen. Leyendo con reconocimiento de texto (puede tardar unos segundos)...';
-        const lo = await capOcr(await capPdfACanvas(file)); r = capParseHumano(lo) || capParseFopep(lo) || capParseProteccion(lo);
+        const lo = await capOcr(await capPdfACanvas(file)); txt = lo; r = capParseHumano(lo) || capParseFopep(lo) || capParseProteccion(lo);
         if(!r) throw new Error('Leí la imagen pero no reconozco el formato. Digita los valores a mano.');
       }
     }
@@ -1514,7 +1545,7 @@ async function capLeerColilla(file){
     if(!r && !/^image\//.test(file.type) && lineas.length){
       // El PDF tiene poco texto útil: puede ser una imagen guardada como PDF. Se intenta leer la imagen.
       box.innerHTML='Leyendo la colilla con reconocimiento de texto (puede tardar unos segundos)...';
-      const lo = await capOcr(await capPdfACanvas(file)); r = capParseHumano(lo) || capParseFopep(lo) || capParseProteccion(lo);
+      const lo = await capOcr(await capPdfACanvas(file)); txt = lo; r = capParseHumano(lo) || capParseFopep(lo) || capParseProteccion(lo);
     }
     if(!r) throw new Error('Todavía no reconozco el formato de esta colilla. Por ahora leo Colpensiones, FOPEP, Fiduprevisora, CASUR, CAGEN/TEGEN, Mindefensa (DIVRI), Seguros Alfa, Sura, Protección y secretarías de educación con Humano en Línea; digita los valores a mano.');
     document.getElementById('cap-pag').value = r.pagaduria; capCambioPag();
@@ -1527,7 +1558,9 @@ async function capLeerColilla(file){
     const el = document.getElementById('cap-ingreso'); el.value = r.ingreso ? '$ '+r.ingreso.toLocaleString('es-CO') : '';
     // 999 cuotas pendientes = descuento indefinido (así aparecen los embargos en CASUR).
     capDescLeidos = r.lineas.map(d=>({...d, tipo: d.cuotas>=999 ? 'embargo' : capTipoConcepto(r.pagaduria, d.n), compra:false}));
+    r.cliente = capDatosCliente(txt);
     capColillaInfo = r;
+    const ci = r.cliente; document.getElementById('ch-in-nom').value = ci.nombre; document.getElementById('ch-in-ced').value = capCedFmt(ci.cedula); document.getElementById('ch-in-tel').value = '';
     capPintarLeido(); capAplicarDescuentos();
   }catch(e){ box.innerHTML = `<span class="cap-err">${e.message}</span>`; }
   document.getElementById('cap-file').value='';
@@ -1537,7 +1570,7 @@ function capPintarLeido(){
   const r = capColillaInfo; if(!r) return;
   const emb = capDescLeidos.filter(d=>d.tipo==='embargo');
   document.getElementById('cap-leido').innerHTML = `<b>Leído de la colilla${r.periodo?' · '+r.periodo:''}</b><br>
-    ${r.secretaria?'Secretaría de Educación '+r.secretaria+'<br>':''}Ingreso: <b>${capPesos(r.ingreso)}</b>${r.tipo?' · '+r.tipo:''}
+    ${r.cliente && (r.cliente.nombre||r.cliente.cedula) ? `Cliente: <b>${capEsc(r.cliente.nombre||'(nombre no leído)')}</b>${r.cliente.cedula?' · C.C. <b>'+capCedFmt(r.cliente.cedula)+'</b>':' · cédula no leída'}<br>` : '<small>No se pudo leer el nombre ni la cédula del cliente.</small><br>'}${r.secretaria?'Secretaría de Educación '+r.secretaria+'<br>':''}Ingreso: <b>${capPesos(r.ingreso)}</b>${r.tipo?' · '+r.tipo:''}
     ${r.devCuenta && r.devCuenta.length>1?'<br><small>Suma: '+r.devCuenta.map(d=>d.n+' '+capPesos(d.v)).join(' + ')+'</small>':''}
     ${r.aviso?`<div class="cap-err" style="margin-top:6px">${r.aviso}</div>`:''}
     ${r.otrosDev.length?'<br>Otros devengados (no suman al ingreso): '+r.otrosDev.map(d=>d.n+' '+capPesos(d.v)).join(', '):''}
