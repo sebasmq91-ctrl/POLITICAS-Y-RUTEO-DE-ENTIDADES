@@ -1701,14 +1701,16 @@ const LIQ_SUD = {
     p210:{tasa:0.021,  f:[24860,25100,25464,25726,26373,27244,28444,30149,32674,36648,43536,57730,101176]},
     p185:{tasa:0.0185, f:[null,22572,22821,23105,23801,24726,25985,27753,30341,34375,41311,55513,98785]}
   },
-  estudio:665210, transferencia:46670, edadMax:75, montoMax:320000000
+  estudio:665210, transferencia:46670, edadMax:75, montoMax:320000000,
+  // compra de cartera: 2 meses de interés a la tasa de la línea y costo del cheque, sobre el monto total de compra (caso real nov 2026)
+  mesesCausados:2, cheque:0.0081073, margen:{casur:10000}
 };
 function capSudameris(c){
   const L = LIQ_SUD, e = loadData().pols.find(x=>x.entidad==='SUDAMERIS');
   if(!e || e.activa===false) return [];
   if(c.pag==='fondos_priv' ? !normTxt(e.pagadurias).includes(normTxt(c.fondo)) : !capSirve(e, c.pag)) return [];
-  const margen = c.margen!=null ? c.margen : 0;
-  const base0 = {entidad:'SUDAMERIS', margen, costosTxt:'Estudio de crédito y transferencia'};
+  const margen = c.margen!=null ? c.margen : (L.margen[c.pag]||0);
+  const base0 = {entidad:'SUDAMERIS', margen, costosTxt: c.compras>0 ? 'Estudio, transferencia, intereses causados y cheque de la compra' : 'Estudio de crédito y transferencia'};
   const docente = c.pag==='sed';
   if(docente && c.contrato!=='propiedad') return [{...base0, nombre:'Banco Sudameris', error:'En docentes solo atiende propiedad.'}];
   const eMax = docente ? (e.edad_max_docente||65) : L.edadMax;
@@ -1733,7 +1735,12 @@ function capSudameris(c){
     if(id==='p148') avisos.push('Requiere abrir o tener la cuenta pensional en Sudameris.');
     if(id==='p210') avisos.push('Embargo: solo por excepción del director regional.');
     if(c.rep==='alto' && e.aviso_reporte) avisos.push(e.aviso_reporte);
-    const costos = L.estudio + L.transferencia;
+    let costos = L.estudio + L.transferencia;
+    if(c.compras>0){
+      const total = c.compras/(1 - L.mesesCausados*ln.tasa - L.cheque);
+      costos += total - c.compras;
+      avisos.push('Compra de cartera: monto total de compra '+capPesos(total)+' (incluye '+L.mesesCausados+' meses de intereses causados y el costo del cheque).');
+    }
     out.push({...base0, nombre:'Sudameris · '+nom, cuota:cuotaUsada, tasa:ln.tasa, plazo:n, monto, costos, desembolso: monto - costos - c.compras, avisos});
   }
   return out;
