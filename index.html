@@ -755,6 +755,9 @@ thead th:last-child{border-radius:0 8px 0 0}
         <div class="cap-f"><label>Tipo de contrato</label>
           <select id="cap-contrato" onchange="capCalcular()"><option value="propiedad">Propiedad</option><option value="provisional">Provisional vacante definitiva</option><option value="prueba">Período de prueba</option><option value="temporal">Temporales</option></select></div>
       </div>
+      <div class="cap-f" id="cap-antig-wrap" style="display:none"><label>Años en el cargo</label>
+        <input id="cap-antig" type="number" min="0" max="50" step="0.5" placeholder="Pregúntale al cliente" oninput="capCalcular()">
+        <small>La colilla no lo trae: pregúntale desde cuándo está nombrado. Sueños y Banco de Bogotá lo exigen en provisionales.</small></div>
       <div class="cap-f" id="cap-fondo-wrap" style="display:none"><label>Fondo</label>
         <select id="cap-fondo" onchange="capCalcular()">
           <option>Protección</option><option>Porvenir</option><option>Colfondos</option><option>Asulado</option><option>Seguros Alfa</option>
@@ -772,7 +775,7 @@ thead th:last-child{border-radius:0 8px 0 0}
           <option value="minvital">Mínimo vital: se resta 1 SMMLV</option>
         </select><small id="cap-norma-txt"></small></div>
       <div class="cap-f2">
-        <div class="cap-f"><label>Edad</label><input id="cap-edad" type="number" min="18" max="110" value="65" oninput="capCalcular()"></div>
+        <div class="cap-f"><label>Edad</label><input id="cap-edad" type="number" min="18" max="110" placeholder="Años" oninput="capCalcular()"></div>
         <div class="cap-f"><label>Plazo (meses)</label><input id="cap-plazo" type="number" min="12" max="180" value="144" oninput="capCalcular()"></div>
       </div>
       <div class="cap-f"><label>Reportes en centrales</label>
@@ -1049,6 +1052,7 @@ function capCambioPag(){
   const pag = document.getElementById('cap-pag').value;
   document.getElementById('cap-fondo-wrap').style.display = pag==='fondos_priv' ? '' : 'none';
   document.getElementById('cap-sed-wrap').style.display = pag==='sed' ? '' : 'none';
+  document.getElementById('cap-antig-wrap').style.display = pag==='sed' ? '' : 'none';
   document.getElementById('cap-suenos-wrap').style.display = pag==='sed' ? '' : 'none';
   document.getElementById('cap-fintra-wrap').style.display = pag==='sed' ? '' : 'none';
   capLeyRegla();
@@ -1897,7 +1901,11 @@ const LIQ_BDB = {
   gracia:{ nuevo:0.5, compra:1 },
   seguroEdad:[[18,25,0.0004181],[26,30,0.0005017],[31,40,0.000553],[41,50,0.0006293],[51,60,0.0007244],[61,70,0.0008394],[71,80,0.0028379],[81,999,0.0057616]],
   // método de capacidad por convenio
-  metodo:{ colpensiones:'1527', fopep:'1527', fiduprevisora:'1527', casur:'1527', cremil:'50', cagen_tegen:'1527', mindefensa:'50mv', fondos_priv:'1527' },
+  metodo:{ colpensiones:'1527', fopep:'1527', fiduprevisora:'1527', casur:'1527', cremil:'50', cagen_tegen:'1527', mindefensa:'50mv', fondos_priv:'1527', sed:'general' },
+  // docentes (segmento Docentes, experiencia en sector financiero): tasa EA por antigüedad, plazo hasta 3, 5, 7 y 10 años
+  docentes:{ tramos:[36,60,84,120], plazoMax:120, edadMax:65,
+    hasta9:{ nuevo:[0.21188665631834758,0.20960309848916753,0.24837724351540102,0.2794], compra:[0.20964110667940072,0.21295479583449223,0.22013385302880373,0.22573605576253253] },
+    mas9:{ nuevo:[0.18482369344642435,0.18813951990064376,0.19153566028714875,0.24171003855299156], compra:[0.196825312288187,0.20014084989294384,0.2053514234695617,0.21327295336544494] } },
   ajuste:0.98, estudio:549000, centrales:14240, iva:0.19, gmf:0.004, edadMax:75, plazoMax:144, montoMax:200000000
 };
 function capBogota(c){
@@ -1908,17 +1916,27 @@ function capBogota(c){
   let cap, formula;
   if(met==='50mv' && c.ingreso<=2000000){ cap = c.ingreso - 1000000 - c.ley - c.actuales; formula = 'Mindefensa con ingreso hasta $2 millones: protege $1 millón'; }
   else if(met==='50' || met==='50mv'){ cap = c.ingreso/2 - (c.ley + c.actuales); formula = 'Ingreso ÷ 2 − todos los descuentos'; }
+  else if(met==='general'){ cap = c.cap; formula = c.norma==='minvital' ? 'Mínimo vital' : '(Ingreso − ley) ÷ 2 − descuentos'; }
   else { cap = (c.ingreso - c.ley)/2 - c.actuales; formula = '(Ingreso − ley) ÷ 2 − descuentos'; }
   cap = cap*L.ajuste; formula += ', ajustada al 98 %';
   if(c.margen!=null) cap -= c.margen;
   const tipo = c.compras>0 ? 'compra' : 'nuevo';
   const base = {nombre:'Banco de Bogotá · '+(tipo==='compra'?'compra de cartera':'crédito nuevo'), entidad:'BANCO DE BOGOTÁ', margen:c.margen||0, formula, costosTxt:'Estudio, centrales, IVA, 2 meses de seguro y 4x1000'};
-  if(c.rep!=='sin') return [{...base, error:'Solo atiende perfil limpio: sin reportes ni embargos.'}];
-  if(c.edad>L.edadMax) return [{...base, error:'Edad fuera de política (75 años máximo).'}];
+  if(c.rep!=='sin' || c.embargo) return [{...base, error:'Solo atiende perfil limpio: sin reportes ni embargos.'}];
+  const D = c.pag==='sed' ? L.docentes : null, avD = [];
+  if(D){
+    if(c.contrato!=='propiedad' && c.contrato!=='provisional') return [{...base, error:'En docentes solo atiende propiedad y provisional vacante definitiva.'}];
+    if(c.contrato==='provisional'){ if(c.antig!=null && c.antig<1) return [{...base, error:'Provisional: exige mínimo 1 año en el cargo.'}]; avD.push('Provisional: solo con muy buen perfil en centrales'+(c.antig==null?' y mínimo 1 año en el cargo (escribe los años en el cargo)':'')+'.'); }
+    if(c.edad>D.edadMax) return [{...base, error:'Edad fuera de política para docentes ('+D.edadMax+' años máximo).'}];
+    avD.push('Tasa de docentes '+(c.antig==null?'con hasta 9 años en el cargo (escribe los años para afinarla)':c.antig>9?'con más de 9 años en el cargo':'con hasta 9 años en el cargo')+'. Simulador de agosto 2026: confirmar tasas vigentes.');
+  }
+  else if(c.edad>L.edadMax) return [{...base, error:'Edad fuera de política (75 años máximo).'}];
   if(cap<=0) return [{...base, cuota:cap, error:'Sin capacidad con la fórmula de Banco de Bogotá.'}];
-  const n = Math.min(c.plazo, L.plazoMax), avisos = [];
-  if(n<c.plazo) avisos.push('Plazo ajustado al máximo de '+L.plazoMax+' meses.');
-  const k = L.tramos.findIndex(t=>n<=t), ea = L.ea[tipo][k<0?4:k];
+  const pMax = D ? D.plazoMax : L.plazoMax, n = Math.min(c.plazo, pMax), avisos = [...avD];
+  if(n<c.plazo) avisos.push('Plazo ajustado al máximo de '+pMax+' meses'+(D?' para docentes':'')+'.');
+  let ea;
+  if(D){ const t = D[c.antig!=null && c.antig>9 ? 'mas9' : 'hasta9'][tipo]; const k = D.tramos.findIndex(x=>n<=x); ea = t[k<0?3:k]; }
+  else { const k = L.tramos.findIndex(t=>n<=t); ea = L.ea[tipo][k<0?4:k]; }
   const i = Math.pow(1+ea,1/12)-1, seg = (L.seguroEdad.find(r=>c.edad>=r[0]&&c.edad<=r[1])||[0,0,0])[2];
   const cpm = (1e6*(1+2*i*(L.gracia[tipo]+1)))*(i/(1-Math.pow(1+i,-n))) + seg*1e6;
   let monto = cap/cpm*1e6, cuotaUsada = cap;
@@ -1960,13 +1978,15 @@ function capSuenos(c){
   const base = {nombre:'Sueños · tasa '+capPct(tasa)+' · fianza '+Math.round(fianza*100)+' %', entidad:'SUEÑOS', margen:resguardo, formula, costosTxt:'Fianza, seguro e intereses anticipados y otros'};
   if(!L.secretarias.includes(c.sed)) return [{...base, error:'Sueños no atiende esta secretaría.'}];
   if(c.contrato==='prueba' || c.contrato==='temporal') return [{...base, error:'Sueños solo atiende propiedad y provisional vacante definitiva.'}];
+  if(c.contrato==='provisional' && c.antig!=null && c.antig<=3) return [{...base, error:'Provisional: Sueños exige más de 3 años en el contrato.'}];
+  if(c.contrato==='propiedad' && c.antig!=null && c.antig<0.5) return [{...base, error:'Propiedad: Sueños exige mínimo 6 meses en el cargo.'}];
   if(!tasa) return [{...base, error:'Escribe la tasa de Sueños.'}];
   const mesesRetiro = (L.edadRetiro - c.edad)*12 - 1;
   if(mesesRetiro<24) return [{...base, error:'Le faltan menos de 2 años para el retiro forzoso (65 años): no es sujeto de crédito.'}];
   if(cap<=0) return [{...base, cuota:cap, error:'Sin capacidad con la fórmula de Sueños.'}];
   const pmax = Math.min(L.plazoMax, mesesRetiro), n = Math.min(c.plazo, pmax), avisos = [];
   if(n<c.plazo) avisos.push('Plazo ajustado a '+pmax+' meses por el retiro forzoso a los 65 años (aproximado según la edad).');
-  if(c.contrato==='provisional') avisos.push('Provisional: solo con más de 3 años en el contrato.');
+  if(c.contrato==='provisional' && c.antig==null) avisos.push('Provisional: solo con más de 3 años en el contrato. Escribe los años en el cargo para validarlo.');
   const seg = (L.seguroEdad.find(r=>c.edad>=r[0]&&c.edad<=r[1])||[0,0,0])[2];
   const pot = Math.pow(1+tasa,n);
   let monto = cap/(seg/1e6 + tasa*pot/(pot-1)), cuotaUsada = cap;
@@ -2082,7 +2102,7 @@ function capCalcular(){
   const pag = document.getElementById('cap-pag').value;
   const c = {pag, fondo:document.getElementById('cap-fondo').value, ingreso:capNum('cap-ingreso'), ley:capNum('cap-ley'), actuales:capNum('cap-actuales'),
     edad:parseInt(document.getElementById('cap-edad').value,10)||0, plazo:parseInt(document.getElementById('cap-plazo').value,10)||0,
-    rep:document.getElementById('cap-rep').value, compras:capNum('cap-compras'), sed:document.getElementById('cap-sed').value, contrato:document.getElementById('cap-contrato').value, margen:(document.getElementById('cap-margen').value.replace(/[^\d]/g,'')!=='' ? capNum('cap-margen') : null)};
+    rep:document.getElementById('cap-rep').value, compras:capNum('cap-compras'), sed:document.getElementById('cap-sed').value, contrato:document.getElementById('cap-contrato').value, antig:(document.getElementById('cap-antig').value!=='' ? parseFloat(document.getElementById('cap-antig').value) : null), margen:(document.getElementById('cap-margen').value.replace(/[^\d]/g,'')!=='' ? capNum('cap-margen') : null)};
   const auto = capNormaAuto(pag, c.ingreso);
   const sel = document.getElementById('cap-norma').value;
   const norma = sel==='auto' ? auto.n : sel;
@@ -2092,6 +2112,7 @@ function capCalcular(){
   c.embargo = capDescLeidos.some(d=>d.tipo==='embargo');
   const kp = document.getElementById('cap-kpis');
   if(!c.ingreso){ kp.innerHTML=''; box.innerHTML='<div class="cap-pend">Escribe el valor de la pensión o salario para calcular.</div>'; document.getElementById('cap-pend').innerHTML=''; return; }
+  if(!c.edad){ kp.innerHTML=''; box.innerHTML='<div class="cap-pend">Escribe la edad del cliente para calcular: cada entidad tiene topes de edad y de plazo.</div>'; document.getElementById('cap-pend').innerHTML=''; capUltimo=null; return; }
   const baseTxt = norma==='minvital' ? 'Ingreso − 1 SMMLV − descuentos de ley − descuentos actuales' : '(Ingreso − descuentos de ley) ÷ 2 − descuentos actuales';
   kp.innerHTML = `<div class="cap-kpi main ${c.cap<=0?'neg':''}"><span>Capacidad disponible</span><b>${capPesos(c.cap)}</b><small>${baseTxt}</small></div>
     <div class="cap-kpi"><span>Norma aplicada</span><b style="font-size:17px">${norma==='minvital'?'Mínimo vital':'Ley 1527'}</b><small>${norma==='minvital'?'SMMLV '+capPesos(SMMLV):'50 % del ingreso neto de ley'}</small></div>
