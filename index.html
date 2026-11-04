@@ -760,9 +760,9 @@ thead th:last-child{border-radius:0 8px 0 0}
           <option>Protección</option><option>Porvenir</option><option>Colfondos</option><option>Asulado</option><option>Seguros Alfa</option>
           <option>Mapfre</option><option>Positiva</option><option>Seguros Bolívar</option><option>Andina Vida</option>
         </select></div>
-      <div class="cap-f"><label>Valor de la pensión o salario</label><input id="cap-ingreso" inputmode="numeric" placeholder="$ 0" oninput="capFmt(this)"></div>
+      <div class="cap-f"><label>Valor de la pensión o salario</label><input id="cap-ingreso" inputmode="numeric" placeholder="$ 0" oninput="capLeyRegla(this)"></div>
       <div class="cap-f"><label>Descuentos de ley</label><input id="cap-ley" inputmode="numeric" placeholder="$ 0" oninput="capFmt(this)">
-        <small>Salud, tal como sale en la colilla. Docentes activos: salud más pensión.</small></div>
+        <small id="cap-ley-txt">Salud, tal como sale en la colilla. Docentes activos: salud más pensión.</small></div>
       <div class="cap-f"><label>Descuentos de libranza que ya tiene</label><input id="cap-actuales" inputmode="numeric" placeholder="$ 0" oninput="capFmt(this)">
         <small>Cuotas de créditos, cooperativas y demás descuentos que siguen operando.</small></div>
       <div class="cap-f"><label>Norma de capacidad</label>
@@ -779,6 +779,20 @@ thead th:last-child{border-radius:0 8px 0 0}
         <select id="cap-rep" onchange="capCalcular()">
           <option value="sin">Sin reporte</option><option value="leve">Reporte leve</option><option value="alto">Mora media o alta</option>
         </select></div>
+      <div class="cap-f"><label>Tasa Solux</label>
+        <select id="cap-tasa-solux" onchange="capCalcular()">
+          <option value="valia">Valia · score 800+ · 1,35 %</option>
+          <option value="kp1">KP perfil 1 · score 700+ · 1,54 %</option>
+          <option value="kp2">KP perfil 2 · score 550 a 699 · 1,57 %</option>
+          <option value="kp3" selected>KP perfil 3 · score 400 a 549 · 1,72 %</option>
+          <option value="kp4">KP perfil 4 · score 0 a 399 · 1,83 %</option>
+          <option value="est12">Estándar perfiles 1 y 2 · score 550+ · 1,75 %</option>
+          <option value="est34">Estándar perfiles 3 y 4 · score 0 a 549 · 1,85 %</option>
+          <option value="ce550">Compra especial · score 550+ · 1,54 %</option>
+          <option value="ce350">Compra especial · score 350 a 549 · 1,57 %</option>
+          <option value="ce420">Compra especial · score 420+ (carteras de la lista) · 1,57 %</option>
+        </select>
+        <small>Según el score del cliente. Valia es el producto bancario de Solux.</small></div>
       <div class="cap-f"><label>Tasa Excelcredit</label>
         <select id="cap-tasa-excel" onchange="capCalcular()"><option value="0.0145">1,45 % M.V.</option><option value="0.0152">1,52 % M.V.</option><option value="0.0156">1,56 % M.V.</option><option value="0.0160">1,6 % M.V.</option><option value="0.0164">1,64 % M.V.</option><option value="0.0168" selected>1,68 % M.V.</option><option value="0.0172">1,72 % M.V.</option><option value="0.0175">1,75 % M.V.</option><option value="0.0178">1,78 % M.V.</option><option value="0.0180">1,8 % M.V.</option></select>
         <small>La define el estudio de Excelcredit; casi siempre sale entre 1,64 % y 1,74 %.</small></div>
@@ -1037,7 +1051,7 @@ function capCambioPag(){
   document.getElementById('cap-sed-wrap').style.display = pag==='sed' ? '' : 'none';
   document.getElementById('cap-suenos-wrap').style.display = pag==='sed' ? '' : 'none';
   document.getElementById('cap-fintra-wrap').style.display = pag==='sed' ? '' : 'none';
-  capCalcular();
+  capLeyRegla();
 }
 // Norma: Mindefensa siempre mínimo vital; docentes con menos de 2 SMMLV, mínimo vital; el resto Ley 1527.
 function capNormaAuto(pag, ingreso){
@@ -1115,6 +1129,7 @@ const CONCEPTOS = {
     [/EMBARG|JUZGAD|JUDICIAL|ALIMENTOS|DEMANDA|CONCILIATORI/i, 'embargo'],
     [/SALUD|\bEPS\b|SOLIDARIDAD|\bFSP\b|APORTE.*PENSI|APORTE DE LEY|FONDO.*PENSI/i, 'ley'],
     [/FUNERA|EXEQUI|CAPILLA/i, 'fijo'],
+    [/COOP.*\bAPORTES?\b|\bAPORTES?\b.*COOP/i, 'fijo'],   // aportes a cooperativa: ahorro del asociado, no se compran
     [/\bCCF\b|CAJA DE COMPENSACI|COMFAMA|COMFENALCO|COLSUBSIDIO|CAFAM|COMPENSAR/i, 'fijo']   // cajas de compensación: no se compran
   ],
   casur: [
@@ -1259,7 +1274,7 @@ function capParseHumano(lineas){
     let desc = m[2].trim(); const ult = desc.split(' ').pop();
     if(ult==='NULL' || ult===m[1]) desc = desc.slice(0,-ult.length).trim();   // columna de código repetida
     const n = (m[1]+' '+desc).trim(), d = capNumCo(m[3]), q = capNumCo(m[4]);
-    if(d>0) dev.push({n, v:d}); if(q>0) ded.push({n, v:q});
+    if(d>0 && !(q>0 && d<1000)) dev.push({n, v:d}); if(q>0) ded.push({n, v:q});   // un devengo de centavos junto a una deducción es un 0,00 mal leído
   }
   if(!dev.length) return null;
   const noCuenta = /PRIMA|VACACI|RETRO|HORAS? EXTRA|INCAPACID|REINTEGRO/i;
@@ -1625,6 +1640,27 @@ function capTotalCompras(){
   capCalcular();
 }
 
+// Salud de pensionados cuando no hay colilla: 1 SMMLV 4 %, hasta 2 SMMLV 10 %, más de 2 SMMLV 12 %; CASUR y CREMIL 5 %.
+// Con colilla se respeta lo que trae la colilla. Si el asesor corrige el valor a mano, no se vuelve a calcular encima.
+let capLeyAuto = null;
+function capPctSalud(pag, ing){
+  if(pag==='casur' || pag==='cremil') return 0.05;
+  return ing<=SMMLV ? 0.04 : ing<=2*SMMLV ? 0.10 : 0.12;
+}
+function capLeyRegla(inp){
+  if(inp){ const d = inp.value.replace(/[^\d]/g,''); inp.value = d ? '$ '+parseInt(d,10).toLocaleString('es-CO') : ''; }
+  const pag = document.getElementById('cap-pag').value, txt = document.getElementById('cap-ley-txt');
+  const base = 'Salud, tal como sale en la colilla. Docentes activos: salud más pensión.';
+  const ing = capNum('cap-ingreso'), el = document.getElementById('cap-ley'), cur = capNum('cap-ley');
+  const manual = cur && cur!==capLeyAuto;
+  if(pag==='sed' && cur && cur===capLeyAuto){ el.value = ''; capLeyAuto = null; }
+  if(capDescLeidos.length || pag==='sed' || !ing || manual){ if(txt) txt.textContent = (manual && !capDescLeidos.length && pag!=='sed') ? 'Valor escrito a mano: la regla de salud no lo cambia.' : base; capCalcular(); return; }
+  const pct = capPctSalud(pag, ing), v = Math.round(ing*pct);
+  el.value = '$ '+v.toLocaleString('es-CO'); capLeyAuto = v;
+  if(txt) txt.textContent = 'Calculado con la regla de salud de pensionados: '+Math.round(pct*100)+' % del ingreso. Si la colilla trae otro valor, corrígelo.';
+  capCalcular();
+}
+
 function capAplicarDescuentos(){
   const fmt = v => v ? '$ '+Math.round(v).toLocaleString('es-CO') : '';
   document.getElementById('cap-ley').value = fmt(capDescLeidos.filter(d=>d.tipo==='ley').reduce((a,d)=>a+d.v,0));
@@ -1661,6 +1697,42 @@ function capExcelcredit(c){
   out.push({...base, cuota:cuotaUsada, tasa, plazo:n, monto, costos, desembolso: monto - costos - c.compras, avisos});
   return out;
 }
+// SOLUX: simulador del portal (nov 2026). Cuota = factor de la tasa + seguro 2.250 por millón; descuentos 18,42 % del crédito.
+const LIQ_SOLUX = {
+  lineas:{ valia:{t:0.0135,n:'Valia'}, kp1:{t:0.0154,n:'KP perfil 1'}, kp2:{t:0.0157,n:'KP perfil 2'}, kp3:{t:0.0172,n:'KP perfil 3'}, kp4:{t:0.0183,n:'KP perfil 4'},
+    est12:{t:0.0175,n:'Estándar perfiles 1 y 2'}, est34:{t:0.0185,n:'Estándar perfiles 3 y 4'}, ce550:{t:0.0154,n:'Compra especial',compra:1}, ce350:{t:0.0157,n:'Compra especial',compra:1}, ce420:{t:0.0157,n:'Compra especial',compra:1} },
+  seguro:2250, descuentos:0.1842, plazoMax:168, margenPens:2000,
+  // pensionados: hasta 75 años $200M; 76 a 80 años $50M (fin hasta 85 años 364 días). Docentes: fin hasta 67 años, $180M menores de 65, $150M de 65 en adelante.
+  montoValia:280000000, montoValiaInv:100000000, edadValia:75
+};
+function capSolux(c){
+  const L = LIQ_SOLUX, e = loadData().pols.find(x=>x.entidad==='SOLUX');
+  if(!e || e.activa===false) return [];
+  if(c.pag==='fondos_priv' ? !normTxt(e.pagadurias).includes(normTxt(c.fondo)) : !capSirve(e, c.pag)) return [];
+  const id = document.getElementById('cap-tasa-solux').value, ln = L.lineas[id], docente = c.pag==='sed';
+  const margen = c.margen!=null ? c.margen : (docente ? 0 : L.margenPens);
+  const base = {nombre:'Solux · '+ln.n+' · tasa '+capPct(ln.t), entidad:'SOLUX', margen, costosTxt:'Descuentos del crédito (aproximado)'};
+  if(c.embargo) return [{...base, error:'No acepta embargos.'}];
+  if(docente && c.contrato!=='propiedad') return [{...base, error:'En docentes solo atiende nombramiento en propiedad.'}];
+  if(ln.compra && !(c.compras>0)) return [{...base, error:'La línea de compra especial requiere compra de cartera.'}];
+  let montoMax, edadFin;
+  if(id==='valia'){ if(c.edad>L.edadValia) return [{...base, error:'Valia: edad máxima 75 años y 10 meses.'}]; montoMax = L.montoValia; edadFin = 86; }
+  else if(docente){ if(c.edad>=67) return [{...base, error:'Docentes: edad de finalización hasta 67 años.'}]; montoMax = c.edad<65 ? 180000000 : 150000000; edadFin = 67; }
+  else { if(c.edad>80) return [{...base, error:'Edad máxima 80 años y 10 meses.'}]; montoMax = c.edad<=75 ? 200000000 : 50000000; edadFin = 86; }
+  const avisos = ['Descuentos aproximados (18,42 % del crédito). La tasa depende del score.'];
+  const cuota = c.cap - margen;
+  if(cuota<=0) return [{...base, cuota, error:'Sin capacidad después del margen.'}];
+  const nMax = Math.min(L.plazoMax, Math.floor((edadFin - c.edad)*12)), n = Math.min(c.plazo, nMax);
+  if(n<12) return [{...base, error:'No alcanza el plazo mínimo por la edad.'}];
+  if(n<c.plazo) avisos.push('Plazo ajustado a '+n+' meses por '+(n===L.plazoMax?'el máximo de la entidad':'la edad de finalización')+'.');
+  const f = ln.t/(1-Math.pow(1+ln.t,-n)) + L.seguro/1e6;
+  let monto = cuota/f, cuotaUsada = cuota;
+  if(monto>montoMax){ monto = montoMax; cuotaUsada = monto*f; avisos.push('Monto limitado al tope de '+capPesos(montoMax)+'.'); }
+  if(id==='valia') avisos.push('Valia: invalidez máximo $100 millones.');
+  const costos = monto*L.descuentos;
+  return [{...base, cuota:cuotaUsada, tasa:ln.t, plazo:n, monto, costos, desembolso: monto - costos - c.compras, avisos}];
+}
+
 // BAN100: capacidad propia por pagaduría (liquidador oct 2026).
 const LIQ_BAN100 = {
   seguroEdad:[[18,75,1520],[76,78,6370],[79,81,9750],[82,84,16215]], edadMax:84,
@@ -1998,7 +2070,7 @@ function capCalcular(){
     <div class="cap-kpi"><span>Norma aplicada</span><b style="font-size:17px">${norma==='minvital'?'Mínimo vital':'Ley 1527'}</b><small>${norma==='minvital'?'SMMLV '+capPesos(SMMLV):'50 % del ingreso neto de ley'}</small></div>
     <div class="cap-kpi"><span>Pagaduría</span><b style="font-size:17px">${CAP_PAG_NOMBRE[pag]}${pag==='fondos_priv'?' · '+c.fondo:''}</b><small>${c.edad} años · ${c.plazo} meses</small></div>`;
   const _pols = loadData().pols;
-  const filas = [...capValorenz(c), ...capExcelcredit(c), ...capSerfinanza(c), ...capBan100(c), ...capPichincha(c), ...capSudameris(c), ...capBogota(c), ...capSuenos(c), ...capVantage(c), ...capFintra(c)].map(f=>{
+  const filas = [...capValorenz(c), ...capSolux(c), ...capExcelcredit(c), ...capSerfinanza(c), ...capBan100(c), ...capPichincha(c), ...capSudameris(c), ...capBogota(c), ...capSuenos(c), ...capVantage(c), ...capFintra(c)].map(f=>{
     const e = _pols.find(x=>x.entidad===f.entidad);
     if(c.embargo && e && e.embargo==='NO') return {...f, error:'No acepta embargo en colilla.'};
     if(!f.error && f.desembolso<=0) return {...f, error: c.compras>0 ? 'El crédito no alcanza a cubrir las compras de cartera y los costos.' : 'La capacidad no alcanza para un crédito.'};
@@ -2012,21 +2084,23 @@ function capCalcular(){
   ok.sort((a,b)=> orden==='desembolso' ? b.desembolso-a.desembolso : (posE(a.entidad)-posE(b.entidad)) || (a._i-b._i));
   const maxD = Math.max(...ok.map(f=>f.desembolso));
   const mal = filas.filter(f=>f.error);
+  // Entidades que atienden la pagaduría pero aún no tienen liquidador: van como fila, en su puesto de la matriz.
+  const conLiq = ['SOLUX','EXCELCREDIT','VALORENZ','SERFINANZA','BAN100','BANCO PICHINCHA','SUDAMERIS','BANCO DE BOGOTÁ','SUEÑOS','VANTAGE','FINTRA'];
+  const pend = _pols.filter(e=>e.activa!==false && !conLiq.includes(e.entidad) && capSirve(e, pag) && (e.entidad!=='KALA' || (c.edad>=85 && c.edad<=90))).map(e=>({entidad:e.entidad, pendiente:true}));
+  if(orden==='desembolso') ok.push(...pend);
+  else { for(const r of pend){ const k = ok.findIndex(f=>posE(f.entidad)>posE(r.entidad)); if(k<0) ok.push(r); else ok.splice(k,0,r); } }
   capUltimo = {c, ok, baseTxt};
-  if(!filas.length){ box.innerHTML = '<div class="cap-pend">Ninguna entidad con liquidador cargado atiende este caso todavía.</div>'; }
+  if(!filas.length && !pend.length){ box.innerHTML = '<div class="cap-pend">Ninguna entidad atiende este caso todavía.</div>'; }
   else box.innerHTML = `<div class="cmp-wrap"><table class="cmp-table cmp-res"><thead><tr><th>Entidad y producto</th><th>Cuota y tasa</th><th>Monto del crédito</th><th>Costos del crédito</th><th>Desembolso estimado</th></tr></thead><tbody>
-    ${ok.concat(mal).map(f=>`<tr><td class="cmp-ent"><div class="cmp-name" style="border-left:4px solid ${ENT_COLS[f.entidad]||'#1E2D3D'}">${logoEntidad(f.entidad)}<div><strong class="cmp-ent-nom">${f.entidad}</strong><div class="cap-prod">${f.nombre}</div>
+    ${ok.concat(mal).map(f=> f.pendiente ? `<tr><td class="cmp-ent"><div class="cmp-name" style="border-left:4px solid ${ENT_COLS[f.entidad]||'#1E2D3D'}">${logoEntidad(f.entidad)}<div><strong class="cmp-ent-nom">${f.entidad}</strong><div class="cap-prod">Sin liquidador en la herramienta</div></div></div></td>
+      <td colspan="4" style="color:#4B5563">También atiende este caso. Calcula el monto en el simulador de ${f.entidad} y valida su política.</td></tr>` : `<tr><td class="cmp-ent"><div class="cmp-name" style="border-left:4px solid ${ENT_COLS[f.entidad]||'#1E2D3D'}">${logoEntidad(f.entidad)}<div><strong class="cmp-ent-nom">${f.entidad}</strong><div class="cap-prod">${f.nombre}</div>
       <div class="cmp-razon">${f.formula?'Capacidad con su fórmula: '+f.formula+'. ':''}Margen que debe quedar libre: ${capPesos(f.margen)}</div>${f.error?`<div class="cmp-aviso">${f.error}</div>`:''}${(f.avisos||[]).map(a=>`<div class="cmp-aviso">${a}</div>`).join('')}</div></div></td>
       ${f.error?'<td colspan="4" style="color:#9CA3AF">No aplica</td>':`<td style="white-space:nowrap"><span class="cmp-monto">${capPesos(f.cuota)}</span><div class="cmp-razon">${capPct(f.tasa)} M.V. · ${f.plazo} meses</div></td>
       <td style="white-space:nowrap"><span class="cmp-monto">${capPesos(f.monto)}</span></td>
       <td style="white-space:nowrap">${capPesos(f.costos)}<div class="cmp-razon">${f.costosTxt||'Fianza, estudio y otros'}</div></td>
-      <td style="white-space:nowrap"><span class="cap-desemb">${capPesos(f.desembolso)}</span>${!f.error && ok.length>1 && f.desembolso===maxD?'<div class="cap-top">Mayor desembolso</div>':''}${c.compras?`<div class="cmp-razon">Ya descontadas compras por ${capPesos(c.compras)}</div>`:''}<button class="cap-sel-btn" onclick="capSeleccionar(${ok.indexOf(f)})">Seleccionar</button></td>`}</tr>`).join('')}
+      <td style="white-space:nowrap"><span class="cap-desemb">${capPesos(f.desembolso)}</span>${!f.error && ok.filter(x=>!x.pendiente).length>1 && f.desembolso===maxD?'<div class="cap-top">Mayor desembolso</div>':''}${c.compras?`<div class="cmp-razon">Ya descontadas compras por ${capPesos(c.compras)}</div>`:''}<button class="cap-sel-btn" onclick="capSeleccionar(${ok.indexOf(f)})">Seleccionar</button></td>`}</tr>`).join('')}
     </tbody></table></div>`;
-  // Entidades que atienden la pagaduría pero aún no tienen liquidador.
-  const conLiq = ['EXCELCREDIT','VALORENZ','SERFINANZA','BAN100','BANCO PICHINCHA','SUDAMERIS','BANCO DE BOGOTÁ','SUEÑOS','VANTAGE','FINTRA'];
-  const {pols} = loadData();
-  const pend = pols.filter(e=>e.activa!==false && !conLiq.includes(e.entidad) && capSirve(e, pag)).map(e=>e.entidad);
-  document.getElementById('cap-pend').innerHTML = (pend.length?`<div class="cap-pend"><strong>Liquidador pendiente:</strong> ${pend.join(', ')}. Estas entidades también atienden ${CAP_PAG_NOMBRE[pag]}, pero todavía no calculan monto aquí.</div>`:'')
+  document.getElementById('cap-pend').innerHTML = ''
     + (capDescLeidos.some(d=>d.compra && !d.saldoCompra) ? `<div class="cap-aviso"><strong>Falta el saldo a recoger de: ${capDescLeidos.filter(d=>d.compra && !d.saldoCompra).map(d=>capEsc(d.n)).join(', ')}.</strong> Escríbelo debajo de cada crédito marcado (sale de centrales o del certificado de deuda). Mientras tanto el desembolso no lo descuenta.</div>` : '')
     + `<div class="cap-aviso">Valores aproximados. El monto, la tasa y el perfil final los define el estudio de cada entidad.</div>`;
 }
