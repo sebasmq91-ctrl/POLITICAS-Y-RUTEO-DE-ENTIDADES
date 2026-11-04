@@ -1057,9 +1057,9 @@ function capCambioPag(){
   document.getElementById('cap-fintra-wrap').style.display = pag==='sed' ? '' : 'none';
   capLeyRegla();
 }
-// Norma: Mindefensa siempre mínimo vital; docentes con menos de 2 SMMLV, mínimo vital; el resto Ley 1527.
+// Norma: Mindefensa y docentes con menos de 2 SMMLV, mínimo vital; con 2 SMMLV o más, Ley 1527. El resto, Ley 1527.
 function capNormaAuto(pag, ingreso){
-  if(pag==='mindefensa') return {n:'minvital', r:'Mindefensa aplica mínimo vital sin importar el ingreso.'};
+  if(pag==='mindefensa') return ingreso>0 && ingreso<2*SMMLV ? {n:'minvital', r:'Mindefensa con ingreso menor a 2 SMMLV: aplica mínimo vital.'} : {n:'1527', r:'Mindefensa con ingreso de 2 SMMLV o más: aplica Ley 1527.'};
   if(pag==='sed' && ingreso>0 && ingreso<2*SMMLV) return {n:'minvital', r:'Docente con ingreso menor a 2 SMMLV: aplica mínimo vital.'};
   return {n:'1527', r:'Aplica Ley 1527.'};
 }
