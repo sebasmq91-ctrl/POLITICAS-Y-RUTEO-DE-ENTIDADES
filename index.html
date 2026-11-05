@@ -537,6 +537,47 @@ tr.cap-var td{background:#F8FAFC}
 .cap-wiz-aviso{background:#ECFDF5;border:1px solid #6EE7B7;color:#065F46;border-radius:8px;padding:8px 10px;font-size:12.5px;margin-bottom:12px;line-height:1.45}
 .cap-reset-btn{display:block;width:100%;margin-top:10px;background:#fff;border:1.5px solid #FCA5A5;color:#B91C1C;border-radius:8px;padding:8px 10px;font-size:12.5px;font-weight:700;cursor:pointer;font-family:inherit}
 .cap-reset-btn:hover{background:#FEF2F2}
+/* Colilla de pago */
+.slip{background:#fff;border:1px solid #CBD5E0;border-radius:12px;margin-bottom:14px;box-shadow:0 2px 10px rgba(0,0,0,.05);overflow:hidden;font-variant-numeric:tabular-nums}
+.slip-head{display:flex;align-items:center;gap:14px;background:var(--dark);color:#fff;padding:14px 18px;border-bottom:4px solid var(--cx)}
+.slip-logo{background:#fff;border-radius:8px;padding:4px 6px;display:flex;align-items:center;justify-content:center;width:84px;height:48px;flex-shrink:0}
+.slip-logo img{max-width:100%;max-height:100%;object-fit:contain}
+.slip-tit{flex:1;min-width:0}
+.slip-pag{font-size:24px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;line-height:1.1}
+.slip-sub{font-size:12.5px;color:#B2E5E5;margin-top:3px}
+.slip-per{text-align:right;font-size:12px;color:#B2E5E5}.slip-per b{display:block;font-size:15px;color:#fff;text-transform:uppercase}
+.slip-cli{display:flex;flex-wrap:wrap;gap:6px 28px;padding:10px 18px;background:#F8FAFC;border-bottom:1px dashed #CBD5E0}
+.slip-cli span{display:block;font-size:10.5px;color:#6B7280;font-weight:700;text-transform:uppercase;letter-spacing:.3px}.slip-cli b{font-size:14px;color:var(--dark)}
+.slip-alerta{margin:10px 18px 0;background:#FEF2F2;border:1px solid #FCA5A5;color:#B91C1C;border-radius:8px;padding:7px 10px;font-size:12.5px;font-weight:700}
+.slip-sec{padding:12px 18px 4px;font-size:12px;font-weight:800;color:var(--cx-d);text-transform:uppercase;letter-spacing:.4px}
+.slip-sec small{text-transform:none;letter-spacing:0;font-weight:500;color:#6B7280;margin-left:6px}
+.slip-wrap{overflow-x:auto}
+.slip .slip-tab{width:100%;min-width:0;border-collapse:collapse;border-spacing:0;padding:0;font-size:13px}
+.slip .slip-tab td,.slip .slip-tab th{padding:6px 10px;border-bottom:1px solid #EEF2F6;text-align:left;vertical-align:middle;position:static;background:none;color:#1F2937;border-radius:0}
+.slip .slip-tab td:first-child,.slip .slip-tab th:first-child{padding-left:18px}
+.slip .slip-tab td:last-child,.slip .slip-tab th:last-child{padding-right:18px}
+.slip .slip-tab th{font-size:10.5px;color:#6B7280;font-weight:700;text-transform:uppercase;letter-spacing:.3px;border-bottom:1.5px solid #CBD5E0}
+.slip .slip-tab .sl-num{text-align:right;white-space:nowrap;font-weight:700}
+.slip tfoot td{font-weight:800;border-bottom:0;background:#F8FAFC}
+.slip .slip-neto td{border-top:1.5px solid #CBD5E0;color:var(--dark);font-size:14px}
+.slip .sl-gris td{color:#6B7280}.slip small{display:block;font-size:11px;color:#6B7280;font-weight:500}
+.slip .sl-cuo{text-align:center;color:#4B5563;white-space:nowrap}
+.slip .sl-chk{text-align:center}.slip .sl-chk input{width:17px;height:17px}
+.slip select{font-size:12px;padding:3px 6px;border:1px solid #CBD5E0;border-radius:5px;background:#fff;max-width:170px}
+.slip td.cap-saldo{min-width:130px}
+.slip td.cap-saldo input{width:100%;padding:5px 8px;border:1.5px solid #6EE7B7;border-radius:6px;font-size:13px;font-family:inherit}
+.slip .sl-guion{color:#CBD5E0}
+.slip .sl-cuo-m{display:none}
+@media (max-width:640px){.slip .sl-cuo-m{display:block}}
+.slip .sl-marca{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:7px;background:#CBD5E0;vertical-align:middle}
+.slip .sl-ley .sl-marca{background:#3B82F6}.slip .sl-libranza .sl-marca{background:var(--cx)}.slip .sl-embargo .sl-marca{background:#DC2626}.slip .sl-fijo .sl-marca{background:#9CA3AF}
+.slip tr.sl-embargo td{background:#FEF2F2}
+.slip tr.sl-compra td{background:#F0FDF4}
+.slip .slip-ded tfoot tr td{border-top:0}
+.slip-res{display:flex;flex-wrap:wrap;gap:8px;padding:10px 18px 14px;border-top:1px dashed #CBD5E0}
+.slip-res span{font-size:12px;border-radius:999px;padding:4px 10px;background:#F1F5F9;color:#374151}.slip-res b{margin-left:4px}
+.slip-res .sl-ley{background:#EFF6FF;color:#1E40AF}.slip-res .sl-libranza{background:#ECFDF5;color:#065F46}.slip-res .sl-embargo{background:#FEF2F2;color:#B91C1C}
+@media (max-width:640px){.slip-pag{font-size:19px}.slip-head{flex-wrap:wrap;gap:8px}.slip-tit{flex-basis:100%}.slip-per{text-align:left}}
 .cap-step{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:800;color:var(--dark);text-transform:uppercase;letter-spacing:.4px;margin:16px 0 10px;padding-top:12px;border-top:1px solid #E5E7EB}
 .cap-step:first-child{margin-top:0;padding-top:0;border-top:0}
 .cap-wiz-aviso + .cap-step{margin-top:0;padding-top:0;border-top:0}
@@ -621,6 +662,28 @@ tr.cap-var td{background:#F8FAFC}
 .cap-desc select{display:block;margin-top:4px;font-size:12px;padding:3px 6px;border:1px solid #CBD5E0;border-radius:5px;background:#fff;max-width:100%}
 .cap-desc small{font-size:11px;color:#6B7280}
 .cap-desc em{font-style:normal;font-weight:700;white-space:nowrap}
+.slip tr.cap-desc{display:table-row;padding:0;border:0}
+.slip tr.cap-desc td{border-top:0}
+.slip tr.cap-desc input[type=checkbox]{margin:0;flex-shrink:0}
+.slip tr.cap-desc span.sl-marca{flex:none}
+.slip tr.cap-desc select{display:inline-block;margin:0;max-width:170px}
+.slip td.cap-saldo{display:table-cell;margin:0;font-size:13px}
+.slip tr.cap-desc td.cap-saldo input{display:block;margin:0;height:auto;font-size:13px;padding:5px 8px}
+@media (max-width:640px){
+ .slip .slip-ded thead{display:none}
+ .slip .slip-ded tbody tr.cap-desc{display:grid;grid-template-columns:1fr auto;gap:6px 10px;padding:10px 14px;border-bottom:1px solid #EEF2F6}
+ .slip .slip-ded tbody tr.cap-desc td{padding:0!important;border:0}
+ .slip .slip-ded tbody tr.cap-desc td:first-child{grid-column:1/-1;font-weight:600}
+ .slip .slip-ded tbody tr.cap-desc td.sl-cuo{display:none}
+ .slip .slip-ded tbody tr.cap-desc:not(.sl-libranza) td.sl-chk{display:none}
+ .slip .slip-ded tbody tr.cap-desc td.sl-chk{text-align:left}
+ .slip .slip-ded tbody tr.cap-desc td.sl-chk::before{content:'Comprar ';font-size:11px;color:#6B7280;font-weight:700;vertical-align:middle}
+ .slip .slip-ded tbody tr.cap-desc td.cap-saldo{min-width:0}
+ .slip .slip-ded tbody tr.cap-desc td.cap-saldo .sl-guion{display:none}
+ .slip .slip-ded tfoot tr{display:flex;justify-content:space-between;padding:0 14px}
+ .slip .slip-ded tfoot td{padding:7px 0!important}
+ .slip .slip-ded tfoot td:empty{display:none}
+}
 .cap-err{color:#B91C1C;font-weight:600}
 @media (max-width:820px){.cap-grid{grid-template-columns:1fr}}
 </style>
@@ -931,6 +994,7 @@ tr.cap-var td{background:#F8FAFC}
       </details>
     </div>
     <div class="cap-res">
+      <div id="cap-colilla-vista"></div>
       <div class="cap-kpis" id="cap-kpis"></div>
       <div id="cap-tabla"></div>
       <div id="cap-pend"></div>
@@ -1752,6 +1816,7 @@ function capParseCremil(lineasTxt){
 function capNuevoEstudio(){
   capDescLeidos = []; capColillaInfo = null; capExtras = []; capLeyAuto = null; capUltimo = null;
   const box = document.getElementById('cap-leido'); box.className = ''; box.innerHTML = '';
+  const cv = document.getElementById('cap-colilla-vista'); if(cv) cv.innerHTML = '';
   ['cap-ingreso','cap-ley','cap-actuales','cap-compras','cap-edad','cap-score','cap-antig','cap-margen','ch-in-nom','ch-in-ced','ch-in-tel','ch-in-obs'].forEach(id=>{ const el = document.getElementById(id); if(el) el.value = ''; });
   const def = {'cap-pag':'colpensiones','cap-rep':'sin','cap-plazo':'144','cap-contrato':'propiedad','cap-sed':'Antioquia (Seduca)','cap-fondo':'Protección',
     'cap-norma':'auto','cap-orden':'sugerido','cap-prod-credia':'est','cap-tasa-excel':'0.0168','cap-tasa-ban100':'0.0146','cap-fga-ban100':'0.15','cap-tasa-pich':'1,33','cap-fintra-linea':'campana'};
@@ -1821,21 +1886,60 @@ async function capLeerColilla(file){
   document.getElementById('cap-file').value='';
 }
 let capColillaInfo = null;
+// Lo leído se muestra como una colilla de pago (igual para todas las pagadurías), encima de los resultados.
+// Periodo legible para el encabezado: toma el último mes y año que aparezca.
+const CAP_MESES_LARGO = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+function capPeriodoFmt(t){
+  t = String(t||''); const re = /(ene|feb|mar|abr|may|jun|jul|ago|sep|oct|nov|dic)[a-záéíóú]*\.?\s*(?:de\s*)?(\d{4})/gi; let m, ult=null;
+  while((m = re.exec(t))) ult = m;
+  if(!ult) return t;
+  const i = ['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'].indexOf(ult[1].toLowerCase());
+  return CAP_MESES_LARGO[i]+' de '+ult[2];
+}
+const CAP_PAG_LARGO = {colpensiones:'Administradora Colombiana de Pensiones', fopep:'Fondo de Pensiones Públicas del Nivel Nacional', fiduprevisora:'Fondo de Prestaciones Sociales del Magisterio',
+  fondos_priv:'Fondo de pensiones', casur:'Caja de Sueldos de Retiro de la Policía Nacional', cremil:'Caja de Retiro de las Fuerzas Militares',
+  cagen_tegen:'Policía Nacional · pensionados por invalidez', mindefensa:'Ministerio de Defensa · pensionados (DIVRI)', sed:'Secretaría de Educación'};
 function capPintarLeido(){
-  const r = capColillaInfo; if(!r) return;
+  const r = capColillaInfo, vista = document.getElementById('cap-colilla-vista'); if(!r){ if(vista) vista.innerHTML=''; return; }
   const emb = capDescLeidos.filter(d=>d.tipo==='embargo');
-  document.getElementById('cap-leido').innerHTML = `<b>Leído de la colilla${r.periodo?' · '+r.periodo:''}</b><br>
-    ${r.cliente && (r.cliente.nombre||r.cliente.cedula) ? `Cliente: <b>${capEsc(r.cliente.nombre||'(nombre no leído)')}</b>${r.cliente.cedula?' · C.C. <b>'+capCedFmt(r.cliente.cedula)+'</b>':' · cédula no leída'}<br>` : '<small>No se pudo leer el nombre ni la cédula del cliente.</small><br>'}${r.secretaria?'Secretaría de Educación '+r.secretaria+'<br>':''}Ingreso: <b>${capPesos(r.ingreso)}</b>${r.tipo?' · '+r.tipo:''}
-    ${r.devCuenta && r.devCuenta.length>1?'<br><small>Suma: '+r.devCuenta.map(d=>d.n+' '+capPesos(d.v)).join(' + ')+'</small>':''}
-    ${r.aviso?`<div class="cap-err" style="margin-top:6px">${r.aviso}</div>`:''}
-    ${r.otrosDev.length?'<br>Otros devengados (no suman al ingreso): '+r.otrosDev.map(d=>d.n+' '+capPesos(d.v)).join(', '):''}
-    ${emb.length?`<div class="cap-err" style="margin-top:6px">Embargo en colilla: ${emb.map(d=>d.n).join(', ')}</div>`:''}
-    <div style="margin-top:6px"><b>Descuentos.</b> Revisa el tipo de cada uno y marca los créditos que se recogen con compra de cartera:</div>
-    ${capDescLeidos.map((d,i)=>`<div class="cap-desc"><input type="checkbox" title="Se compra" ${d.compra?'checked':''} ${d.tipo==='libranza'?'':'disabled'} onchange="capMarcarCompra(${i},this.checked)">
-      <span>${d.n}${d.cuotas?`<br><small>${d.cuotas} cuotas pendientes</small>`:''}${d.saldo?`<br><small>Saldo ${capPesos(d.saldo)}</small>`:''}${d.unaVez?'<br><small>Solo aparece en este mes</small>':''}
-      <select onchange="capDescLeidos[${i}].tipo=this.value;if(this.value!=='libranza')capDescLeidos[${i}].compra=false;capPintarLeido();capAplicarDescuentos()">${Object.entries(TIPOS_DESC).map(([k,v])=>`<option value="${k}" ${d.tipo===k?'selected':''}>${v}</option>`).join('')}</select>
-      ${d.compra?`<label class="cap-saldo">Saldo a recoger<input inputmode="numeric" placeholder="$ 0" value="${d.saldoCompra?'$ '+Math.round(d.saldoCompra).toLocaleString('es-CO'):''}" oninput="capSaldoItem(${i},this)"></label>`:''}</span>
-      <em>${capPesos(d.v)}</em></div>`).join('') || 'No tiene descuentos.'}`;
+  const pag = r.pagaduria, cli = r.cliente || {};
+  const titulo = pag==='fondos_priv' ? (r.fondo||'Fondo privado') : pag==='sed' ? 'Secretaría de Educación' : CAP_PAG_NOMBRE[pag];
+  const sub = pag==='sed' ? (r.secretaria||'') : CAP_PAG_LARGO[pag]||'';
+  const logo = '';
+  // Resumen corto en el formulario
+  document.getElementById('cap-leido').innerHTML = `<b>Leído de la colilla${r.periodo?' · '+capEsc(capPeriodoFmt(r.periodo)):''}</b><br>
+    ${capEsc(titulo)}${cli.nombre?' · '+capEsc(cli.nombre):''}${cli.cedula?' · C.C. '+capCedFmt(cli.cedula):''}<br>
+    <small>Revisa los descuentos en la colilla que aparece al lado de los resultados.</small>
+    ${r.aviso?`<div class="cap-err" style="margin-top:6px">${r.aviso}</div>`:''}${emb.length?`<div class="cap-err" style="margin-top:6px">Embargo en colilla.</div>`:''}`;
+  if(!vista) return;
+  const tot = t => capDescLeidos.filter(d=>d.tipo===t).reduce((a,d)=>a+d.v,0);
+  const totDed = capDescLeidos.reduce((a,d)=>a+d.v,0), totOtros = (r.otrosDev||[]).reduce((a,d)=>a+d.v,0);
+  const totDev = r.ingreso + totOtros, comp = capDescLeidos.filter(d=>d.compra).reduce((a,d)=>a+d.v,0);
+  const devFilas = (r.devCuenta && r.devCuenta.length>1 ? r.devCuenta.map(d=>`<tr><td>${capEsc(d.n)}</td><td class="sl-num">${capPesos(d.v)}</td></tr>`).join('')
+      : `<tr><td>${capEsc(r.tipo ? 'Ingreso base · '+r.tipo : 'Ingreso base')}</td><td class="sl-num">${capPesos(r.ingreso)}</td></tr>`)
+    + (r.otrosDev||[]).map(d=>`<tr class="sl-gris"><td>${capEsc(d.n)} <small>no suma al ingreso</small></td><td class="sl-num">${capPesos(d.v)}</td></tr>`).join('');
+  const dedFilas = capDescLeidos.map((d,i)=>`<tr class="cap-desc sl-${d.tipo}${d.compra?' sl-compra':''}">
+      <td><span class="sl-marca"></span>${capEsc(d.n)}${d.cuotas?`<small class="sl-cuo-m">${d.cuotas} cuotas pendientes</small>`:''}${d.unaVez?' <small>solo este mes</small>':''}${d.saldo?`<small>Saldo en colilla ${capPesos(d.saldo)}</small>`:''}</td>
+      <td class="sl-cuo">${d.cuotas?d.cuotas:''}</td>
+      <td><select onchange="capDescLeidos[${i}].tipo=this.value;if(this.value!=='libranza')capDescLeidos[${i}].compra=false;capPintarLeido();capAplicarDescuentos()">${Object.entries(TIPOS_DESC).map(([k,v])=>`<option value="${k}" ${d.tipo===k?'selected':''}>${v}</option>`).join('')}</select></td>
+      <td class="sl-num">${capPesos(d.v)}</td>
+      <td class="sl-chk"><input type="checkbox" title="Se compra" ${d.compra?'checked':''} ${d.tipo==='libranza'?'':'disabled'} onchange="capMarcarCompra(${i},this.checked)"></td>
+      <td class="cap-saldo">${d.compra?`<input inputmode="numeric" placeholder="Saldo $ 0" value="${d.saldoCompra?'$ '+Math.round(d.saldoCompra).toLocaleString('es-CO'):''}" oninput="capSaldoItem(${i},this)">`:'<span class="sl-guion">—</span>'}</td></tr>`).join('');
+  vista.innerHTML = `<div class="slip">
+    <div class="slip-head">${logo?`<div class="slip-logo">${logo}</div>`:''}<div class="slip-tit"><div class="slip-pag">${capEsc(titulo)}</div><div class="slip-sub">${capEsc(sub)}</div></div>
+      <div class="slip-per"><span>Comprobante de pago</span><b>${capEsc(capPeriodoFmt(r.periodo))}</b></div></div>
+    <div class="slip-cli"><div><span>Cliente</span><b>${capEsc(cli.nombre||'No se pudo leer')}</b></div><div><span>Cédula</span><b>${cli.cedula?capCedFmt(cli.cedula):'No se pudo leer'}</b></div>
+      ${pag==='sed'?`<div><span>Cargo</span><b>${capEsc(r.tipo||'')}</b></div>`:''}</div>
+    ${r.aviso?`<div class="slip-alerta">${r.aviso}</div>`:''}${emb.length?`<div class="slip-alerta">Embargo en colilla: ${emb.map(d=>capEsc(d.n)).join(', ')}</div>`:''}
+    <div class="slip-sec">Devengados</div>
+    <table class="slip-tab"><tbody>${devFilas}</tbody><tfoot><tr><td>Total devengado</td><td class="sl-num">${capPesos(totDev)}</td></tr></tfoot></table>
+    <div class="slip-sec">Deducciones <small>Revisa el tipo de cada una y marca las que se recogen con compra de cartera.</small></div>
+    <div class="slip-wrap"><table class="slip-tab slip-ded"><thead><tr><th>Concepto</th><th>Cuotas pend.</th><th>Tipo</th><th class="sl-num">Valor</th><th>Comprar</th><th>Saldo a recoger</th></tr></thead>
+      <tbody>${dedFilas || '<tr><td colspan="6">No tiene deducciones.</td></tr>'}</tbody>
+      <tfoot><tr><td colspan="3">Total deducciones</td><td class="sl-num">${capPesos(totDed)}</td><td colspan="2"></td></tr>
+        <tr class="slip-neto"><td colspan="3">Neto a pagar</td><td class="sl-num">${capPesos(totDev-totDed)}</td><td colspan="2"></td></tr></tfoot></table></div>
+    <div class="slip-res"><span class="sl-ley">De ley <b>${capPesos(tot('ley'))}</b></span><span class="sl-fijo">Se quedan <b>${capPesos(tot('fijo')+tot('libranza')-comp)}</b></span><span class="sl-libranza">Se compran <b>${capPesos(comp)}</b></span>${tot('embargo')?`<span class="sl-embargo">Embargos <b>${capPesos(tot('embargo'))}</b></span>`:''}</div>
+  </div>`;
 }
 // Compras de cartera: saldo por cada crédito marcado en la colilla + saneamientos u otras carteras por fuera.
 let capExtras = [];
