@@ -896,6 +896,9 @@ tr.cap-var td{background:#F8FAFC}
       <div class="cap-f"><label>Tasa BAN100</label>
         <select id="cap-tasa-ban100" onchange="capCalcular()"><option value="0.0146">1,46 % M.V.</option><option value="0.015">1,50 % M.V.</option><option value="0.0168">1,68 % M.V.</option><option value="0.0179">1,79 % M.V.</option></select>
         <small id="cap-ban100-txt">Depende de la pagaduría y de la política vigente.</small></div>
+      <div class="cap-f"><label>Garantía FGA BAN100</label>
+        <select id="cap-fga-ban100" onchange="capCalcular()"><option value="0.12">12 %</option><option value="0.13">13 %</option><option value="0.14">14 %</option><option value="0.15" selected>15 %</option><option value="0.16">16 %</option><option value="0.17">17 %</option></select>
+        <small>BAN100 aprueba entre 12 % y 17 %; casi siempre entre 15 % y 17 %.</small></div>
       <div class="cap-f"><label>Tasa Banco Pichincha (% M.V.)</label>
         <input id="cap-tasa-pich" inputmode="decimal" value="1,33" oninput="capCalcular()">
         <small>La que arroja la calculadora de Pichincha para el cliente.</small></div>
@@ -1751,7 +1754,7 @@ function capNuevoEstudio(){
   const box = document.getElementById('cap-leido'); box.className = ''; box.innerHTML = '';
   ['cap-ingreso','cap-ley','cap-actuales','cap-compras','cap-edad','cap-score','cap-antig','cap-margen','ch-in-nom','ch-in-ced','ch-in-tel','ch-in-obs'].forEach(id=>{ const el = document.getElementById(id); if(el) el.value = ''; });
   const def = {'cap-pag':'colpensiones','cap-rep':'sin','cap-plazo':'144','cap-contrato':'propiedad','cap-sed':'Antioquia (Seduca)','cap-fondo':'Protección',
-    'cap-norma':'auto','cap-orden':'sugerido','cap-prod-credia':'est','cap-tasa-excel':'0.0168','cap-tasa-ban100':'0.0146','cap-tasa-pich':'1,33','cap-fintra-linea':'campana'};
+    'cap-norma':'auto','cap-orden':'sugerido','cap-prod-credia':'est','cap-tasa-excel':'0.0168','cap-tasa-ban100':'0.0146','cap-fga-ban100':'0.15','cap-tasa-pich':'1,33','cap-fintra-linea':'campana'};
   Object.entries(def).forEach(([id,v])=>{ const el = document.getElementById(id); if(el) el.value = v; });
   const sx = document.getElementById('cap-tasa-solux'); if(sx){ sx.disabled = false; sx.value = 'kp3'; delete sx.dataset.antes; }
   const sb = document.getElementById('cap-tasa-ban100'); if(sb){ sb.disabled = false; delete sb.dataset.antes; }
@@ -2016,7 +2019,7 @@ function capCredialianza(c){
 // BAN100: capacidad propia por pagaduría (liquidador oct 2026).
 const LIQ_BAN100 = {
   seguroEdad:[[18,75,1520],[76,78,6370],[79,81,9750],[82,84,16215]], edadMax:84,
-  garantia:0.12, estudio:166000, iva:1.19, x4mil:0.004, montoMax:273000000, comite:100000000,
+  garantia:0.15, estudio:166000, iva:1.19, x4mil:0.004, montoMax:273000000, comite:100000000,
   fondos:['Porvenir','Protección','Seguros Alfa','Colfondos','Seguros Bolívar','Mapfre','Positiva','Asulado','Andina Vida'],
   pags:['colpensiones','fopep','fiduprevisora','casur','cremil','cagen_tegen','fondos_priv']
 };
@@ -2031,7 +2034,7 @@ function capBan100(c){
   else if(c.pag==='fondos_priv' && (c.fondo==='Porvenir' || c.fondo==='Seguros Alfa')){ colchon = ing<2*SMMLV?3000:5000; cap = (ing-ley)*0.4895 - otros; formula = '(Ingreso − ley) × 48,95 % − descuentos'; }
   else { colchon = ing<2*SMMLV?3000:5000; cap = (ing-ley)/2 - otros; formula = '(Ingreso − ley) ÷ 2 − descuentos'; }
   if(c.margen!=null) colchon = c.margen;
-  const base = {nombre:'BAN100 · tasa '+capPct(tasa), entidad:'BAN100', margen:colchon, formula, costosTxt:'Garantía FGA y estudio (con IVA)'};
+  const base = {nombre:'BAN100 · tasa '+capPct(tasa), entidad:'BAN100', margen:colchon, formula, costosTxt:'Garantía FGA, estudio (con IVA) y 4x1000 de la compra'};
   const fila = L.seguroEdad.find(r=>c.edad>=r[0]&&c.edad<=r[1]);
   if(!fila){ out.push({...base, error:'Edad fuera de política (84 años y 6 meses máximo).'}); return out; }
   const cuota = cap - colchon;
@@ -2044,7 +2047,9 @@ function capBan100(c){
   let monto = cuota/((Math.pow(1+ea,30/360) + fila[2]/1e6)*pmt1), cuotaUsada = cuota;
   if(monto>L.montoMax){ cuotaUsada = cuota*L.montoMax/monto; monto = L.montoMax; avisos.push('Monto limitado al tope de la entidad.'); }
   if(monto>L.comite) avisos.push('Más de $100 millones: va a comité.');
-  const costos = (monto*L.garantia + L.estudio)*L.iva + c.compras*L.x4mil;
+  const fga = parseFloat((document.getElementById('cap-fga-ban100')||{}).value) || L.garantia;
+  avisos.push('Garantía FGA de '+Math.round(fga*100)+' %: BAN100 la define entre 12 % y 17 % en la aprobación.');
+  const costos = (monto*fga + L.estudio)*L.iva + c.compras*L.x4mil;
   out.push({...base, cuota:cuotaUsada, tasa, plazo:n, monto, costos, desembolso: monto - costos - c.compras, avisos});
   return out;
 }
@@ -2475,7 +2480,7 @@ function capFlagAjustes(pag){
   const v = id => (document.getElementById(id)||{}).value;
   const cambios = [
     v('cap-prod-credia')!=='est', !document.getElementById('cap-tasa-solux').disabled && v('cap-tasa-solux')!=='kp3',
-    v('cap-tasa-excel')!=='0.0168', pag!=='casur' && v('cap-tasa-ban100')!=='0.0146', (v('cap-tasa-pich')||'').trim()!=='1,33',
+    v('cap-tasa-excel')!=='0.0168', v('cap-fga-ban100')!=='0.15', pag!=='casur' && v('cap-tasa-ban100')!=='0.0146', (v('cap-tasa-pich')||'').trim()!=='1,33',
     (v('cap-margen')||'').replace(/[^\d]/g,'')!=='', v('cap-norma')!=='auto',
     pag==='sed' && v('cap-fintra-linea')!=='campana', pag==='sed' && v('cap-cond-suenos')!=='gen'
   ].filter(Boolean).length;
