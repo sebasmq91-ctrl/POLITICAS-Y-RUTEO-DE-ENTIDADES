@@ -11,7 +11,7 @@
 body{font-family:'Segoe UI',Arial,sans-serif;background:#EEF4F4;min-height:100vh}
 
 /* TOPBAR */
-.topbar{background:#fff;border-bottom:3px solid var(--cx);box-shadow:0 2px 10px rgba(0,192,192,.12);overflow:hidden;}
+.topbar{background:#fff;border-bottom:3px solid var(--cx);box-shadow:0 2px 10px rgba(0,192,192,.12);overflow:hidden;position:relative}
 .topbar-inner{display:flex;align-items:center;gap:16px;padding:11px 24px;position:relative;z-index:2}
 .topbar-wm{position:absolute;right:16px;top:50%;transform:translateY(-50%);opacity:.07;pointer-events:none;z-index:1}
 .topbar-wm img{height:80px}
@@ -486,6 +486,44 @@ thead th:last-child{border-radius:0 8px 0 0}
 #cap-tabla .cmp-ent{width:34%}
 #cap-tabla .cmp-res td:last-child{min-width:150px}
 .cmp-res .cap-desemb{white-space:nowrap}
+/* Vistas de resultados */
+.cap-bar{display:flex;flex-wrap:wrap;justify-content:space-between;gap:8px 16px;margin:4px 0 10px}
+.cap-bar>div{display:flex;flex-wrap:wrap;align-items:center;gap:6px}
+.cap-bar span{font-size:12px;font-weight:700;color:#6B7280;margin-right:2px}
+.cap-chip{border:1.5px solid #CBD5E0;background:#fff;color:#374151;border-radius:999px;padding:5px 12px;font-size:12.5px;font-weight:700;cursor:pointer;font-family:inherit}
+.cap-chip.on{background:var(--dark);border-color:var(--dark);color:#fff}
+.cap-dests{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-bottom:12px}
+.cap-dest{background:#fff;border:1px solid #D0E8E8;border-top:4px solid var(--cx);border-radius:12px;padding:12px 14px;display:flex;flex-direction:column;gap:6px}
+.cap-dest:nth-child(2){border-top-color:#16A34A}.cap-dest:nth-child(3){border-top-color:#F59E0B}
+.cap-dest-t{font-size:13px;font-weight:800;color:var(--dark);text-transform:uppercase;letter-spacing:.3px}
+.cap-dest-sub{font-size:11.5px;color:#6B7280;margin-top:-4px}
+.cap-dest-ent{display:flex;align-items:center;gap:8px;margin-top:4px}
+.cap-dest-ent .cmp-logo-box{width:64px;height:34px;padding:3px}
+.cap-dest-ent .cmp-logo-ini{font-size:10px}
+.cap-dest-ent b{display:block;font-size:13.5px;color:var(--dark)}.cap-dest-ent small{display:block;font-size:11.5px;color:#4B5563;line-height:1.3}
+.cap-dest-val{font-size:22px;font-weight:800;color:#065F46}
+.cap-dest-det{font-size:11.5px;color:#6B7280;line-height:1.35}
+.cap-dest .cap-sel-btn{margin-top:auto;align-self:flex-start}
+@media (max-width:900px){.cap-dests{grid-template-columns:1fr}}
+.cap-nw{white-space:nowrap}
+.cap-nota-compras{font-size:12px;color:#4B5563;margin-top:6px}
+/* variantes: sub-filas con sangría y sin logo */
+tr.cap-var td{background:#F8FAFC;font-size:13px}
+.cap-sub-ent{padding-left:34px !important;position:relative}
+.cap-sub-ent::before{content:"";position:absolute;left:18px;top:10px;bottom:10px;border-left:2px dashed #CBD5E0}
+.cap-sub-nom{font-size:12.5px;color:#4B5563}.cap-sub-nom b{color:var(--dark)}
+/* vista compacta */
+.cap-compacta td{padding-top:8px !important;padding-bottom:8px !important}
+.cap-c-name{display:flex;align-items:center;gap:10px;padding-left:8px}
+.cap-compacta .cmp-logo-box{width:60px;height:32px;padding:3px;border-radius:6px}
+.cap-compacta .cmp-logo-ini{font-size:9.5px;border-width:1.5px}
+.cap-compacta .cmp-ent-nom{font-size:14px}
+.cap-compacta .cap-prod{font-size:12px;font-weight:500}
+.cap-compacta .cmp-monto{font-size:14.5px}
+.cap-compacta .cap-desemb{font-size:15.5px}
+.cap-compacta .cap-sel-btn{margin-top:4px;padding:4px 10px;font-size:12px}
+.cap-compacta .cap-det summary{font-size:11px}
+.cap-compacta .cap-var-btn{margin-top:3px;padding:2px 8px;font-size:11px}
 .cap-var-btn{display:inline-block;margin-top:6px;background:#fff;border:1px solid var(--cx);color:var(--cx-d);border-radius:6px;padding:3px 9px;font-size:11.5px;font-weight:700;cursor:pointer;font-family:inherit}
 tr.cap-var td{background:#F8FAFC}
 .cap-det{margin-top:4px;font-size:11.5px;color:#4B5563}
@@ -886,7 +924,7 @@ tr.cap-var td{background:#F8FAFC}
           <option value="minvital">Mínimo vital: se resta 1 SMMLV</option>
         </select><small>Si la dejas en automática, se elige según la pagaduría y el ingreso.</small></div>
       <div class="cap-f"><label>Ordenar resultados</label>
-        <select id="cap-orden" onchange="capCalcular()"><option value="sugerido">Orden sugerido (matriz de ruteo)</option><option value="desembolso">Mayor desembolso</option></select></div>
+        <select id="cap-orden" onchange="capCalcular()"><option value="sugerido">Orden sugerido (matriz de ruteo)</option><option value="desembolso">Mayor desembolso</option><option value="costo">Menor costo</option></select></div>
       </details>
     </div>
     <div class="cap-res">
@@ -2359,33 +2397,64 @@ function capCalcular(){
     porEnt[f.entidad].rows.push(f);
   }
   grupos.forEach(g=>{ if(g.rows){ g.rows.sort((a,b)=>a.desembolso-b.desembolso); g.pri = g.rows[0]; g.vars = g.rows.slice(1).sort((a,b)=>b.desembolso-a.desembolso); } });
+  const pctC = f => f.monto>0 ? f.costos/f.monto : 9;
   if(orden==='desembolso') grupos.sort((a,b)=> (b.pri?b.pri.desembolso:-1e15) - (a.pri?a.pri.desembolso:-1e15));
-  const prims = grupos.filter(g=>g.pri).map(g=>g.pri), maxP = Math.max(...prims.map(f=>f.desembolso));
-  const celdaEnt = (f, extra) => `<td class="cmp-ent"><div class="cmp-name" style="border-left:4px solid ${ENT_COLS[f.entidad]||'#1E2D3D'}">${logoEntidad(f.entidad)}<div><strong class="cmp-ent-nom">${f.entidad}</strong><div class="cap-prod">${f.nombre}</div>
-      ${(f.avisos||[]).map(a=>`<div class="cmp-aviso">${a}</div>`).join('')}
-      <details class="cap-det"><summary>Ver detalle</summary>${f.formula?'Capacidad con su fórmula: '+f.formula+'.<br>':''}Margen que debe quedar libre: ${capPesos(f.margen)} <span class="cap-help" tabindex="0" data-tip="Plata que la entidad exige dejar libre en la capacidad para que la cuota no quede justa.">?</span></details>${extra||''}</div></div></td>`;
-  const celdasVal = (f, top) => `<td style="white-space:nowrap"><span class="cmp-monto">${capPesos(f.cuota)}</span><div class="cmp-razon">${capPct(f.tasa)} M.V. · ${f.plazo} meses</div></td>
-      <td style="white-space:nowrap"><span class="cmp-monto">${capPesos(f.monto)}</span></td>
-      <td class="cap-costos"><span style="white-space:nowrap">${capPesos(f.costos)}</span><div class="cmp-razon">${f.costosTxt||'Fianza, estudio y otros'}</div></td>
-      <td><span class="cap-desemb">${capPesos(f.desembolso)}</span>${top?'<div class="cap-top">Mayor desembolso</div>':''}${c.compras?`<div class="cmp-razon">Ya descontadas compras por ${capPesos(c.compras)}</div>`:''}<button class="cap-sel-btn" onclick="capSeleccionar(${ok.indexOf(f)})">Seleccionar</button></td>`;
+  if(orden==='costo') grupos.sort((a,b)=> (a.pri?pctC(a.pri):99) - (b.pri?pctC(b.pri):99));
+  const aplican = ok.filter(f=>!f.pendiente), prims = grupos.filter(g=>g.pri).map(g=>g.pri), maxP = Math.max(...prims.map(f=>f.desembolso));
+  const vista = capVista();
+  const compacta = vista==='compacta';
+  const ayudaMargen = '<span class="cap-help" tabindex="0" data-tip="Plata que la entidad exige dejar libre en la capacidad para que la cuota no quede justa.">?</span>';
+  const detalle = f => `${f.formula?'Capacidad con su fórmula: '+f.formula+'.<br>':''}Cuota: ${capPesos(f.cuota)}<br>Margen que debe quedar libre: ${capPesos(f.margen)} ${ayudaMargen}`;
+  const celdaEnt = (f, extra, sub) => sub
+    ? `<td class="cmp-ent cap-sub-ent"><div class="cap-sub-nom">Otra opción de ${f.entidad}: <b>${f.nombre}</b></div>${(f.avisos||[]).map(a=>`<div class="cmp-aviso">${a}</div>`).join('')}<details class="cap-det"><summary>Ver detalle</summary>${detalle(f)}</details></td>`
+    : compacta
+    ? `<td class="cmp-ent"><div class="cap-c-name" style="border-left:3px solid ${ENT_COLS[f.entidad]||'#1E2D3D'}">${logoEntidad(f.entidad)}<div><strong class="cmp-ent-nom">${f.entidad}</strong><div class="cap-prod">${f.nombre}</div>
+        <details class="cap-det"><summary>${(f.avisos||[]).length?'Avisos ('+f.avisos.length+') y detalle':'Ver detalle'}</summary>${(f.avisos||[]).map(a=>`<div class="cmp-aviso">${a}</div>`).join('')}${detalle(f)}</details>${extra||''}</div></div></td>`
+    : `<td class="cmp-ent"><div class="cmp-name" style="border-left:4px solid ${ENT_COLS[f.entidad]||'#1E2D3D'}">${logoEntidad(f.entidad)}<div><strong class="cmp-ent-nom">${f.entidad}</strong><div class="cap-prod">${f.nombre}</div>
+        ${(f.avisos||[]).map(a=>`<div class="cmp-aviso">${a}</div>`).join('')}
+        <details class="cap-det"><summary>Ver detalle</summary>${detalle(f)}</details>${extra||''}</div></div></td>`;
+  const celdasVal = (f, top) => `<td class="cap-tasa"><span class="cmp-monto">${capPct(f.tasa)}</span><div class="cmp-razon">${f.plazo} meses${compacta?'':' · cuota '+capPesos(f.cuota)}</div></td>
+      <td class="cap-nw"><span class="cmp-monto">${capPesos(f.monto)}</span></td>
+      <td class="cap-costos"><span class="cap-nw">${capPesos(f.costos)}</span><div class="cmp-razon">${compacta ? String(Math.round(pctC(f)*1000)/10).replace('.',',')+' % del monto' : (f.costosTxt||'Fianza, estudio y otros')}</div></td>
+      <td><span class="cap-desemb">${capPesos(f.desembolso)}</span>${top?'<div class="cap-top">Mayor desembolso</div>':''}${!compacta && c.compras?`<div class="cmp-razon">Ya descontadas compras por ${capPesos(c.compras)}</div>`:''}<button class="cap-sel-btn" onclick="capSeleccionar(${ok.indexOf(f)})">Seleccionar</button></td>`;
   const filasHTML = grupos.map((g,gi)=>{
-    if(g.pend){ const f = g.pend; return `<tr><td class="cmp-ent"><div class="cmp-name" style="border-left:4px solid ${ENT_COLS[f.entidad]||'#1E2D3D'}">${logoEntidad(f.entidad)}<div><strong class="cmp-ent-nom">${f.entidad}</strong><div class="cap-prod">Sin liquidador en la herramienta</div></div></div></td>
+    if(g.pend){ const f = g.pend; return `<tr class="cap-pri"><td class="cmp-ent"><div class="${compacta?'cap-c-name':'cmp-name'}" style="border-left:${compacta?3:4}px solid ${ENT_COLS[f.entidad]||'#1E2D3D'}">${logoEntidad(f.entidad)}<div><strong class="cmp-ent-nom">${f.entidad}</strong><div class="cap-prod">Sin liquidador en la herramienta</div></div></div></td>
       <td colspan="4" style="color:#4B5563">También atiende este caso. Calcula el monto en el simulador de ${f.entidad} y valida su política.</td></tr>`; }
     const n = g.vars.length;
     const btn = n ? `<button type="button" class="cap-var-btn" onclick="capVerVariantes(${gi},this)">Ver ${n} opci${n>1?'ones':'ón'} más</button>` : '';
     return `<tr class="cap-pri">${celdaEnt(g.pri, btn)}${celdasVal(g.pri, prims.length>1 && g.pri.desembolso===maxP)}</tr>`
-      + g.vars.map(f=>`<tr class="cap-var" data-g="${gi}" style="display:none">${celdaEnt(f)}${celdasVal(f, false)}</tr>`).join('');
+      + g.vars.map(f=>`<tr class="cap-var" data-g="${gi}" style="display:none">${celdaEnt(f, '', true)}${celdasVal(f, false)}</tr>`).join('');
   }).join('');
+  // Destacados: primera en la matriz, mayor desembolso y menor costo.
+  let destacados = '';
+  if(prims.length>1){
+    const porMatriz = grupos.filter(g=>g.pri).slice().sort((a,b)=>posE(a.ent)-posE(b.ent))[0].pri;
+    const mayor = aplican.reduce((a,f)=>f.desembolso>a.desembolso?f:a, aplican[0]);
+    const otros = aplican.filter(f=>f.entidad!==mayor.entidad);
+    const barato = (otros.length ? otros : aplican).reduce((a,f)=>pctC(f)<pctC(a)?f:a, (otros.length ? otros : aplican)[0]);
+    const tarjeta = (t, sub, f) => `<div class="cap-dest"><div class="cap-dest-t">${t}</div><div class="cap-dest-sub">${sub}</div>
+      <div class="cap-dest-ent">${logoEntidad(f.entidad)}<div><b>${f.entidad}</b><small>${f.nombre}</small></div></div>
+      <div class="cap-dest-val">${capPesos(f.desembolso)}</div><div class="cap-dest-det">Desembolso · monto ${capPesos(f.monto)} · ${capPct(f.tasa)} · ${f.plazo} meses</div>
+      <button class="cap-sel-btn" onclick="capSeleccionar(${ok.indexOf(f)})">Seleccionar</button></div>`;
+    destacados = `<div class="cap-dests">${tarjeta('Primera en la matriz','La que se radica primero según la matriz de ruteo', porMatriz)}${tarjeta('Mayor desembolso','La que más plata le deja al cliente', mayor)}${tarjeta('Menor costo', barato.entidad===mayor.entidad ? 'La que menos descuenta, en % del monto' : 'La que menos descuenta (aparte de la de mayor desembolso)', barato)}</div>`;
+  }
+  const chip = (grupo, v, t, act) => `<button type="button" class="cap-chip${act?' on':''}" onclick="${grupo}('${v}')">${t}</button>`;
+  const barra = `<div class="cap-bar"><div><span>Ordenar</span>${chip('capSetOrden','sugerido','Orden sugerido',orden==='sugerido')}${chip('capSetOrden','desembolso','Mayor desembolso',orden==='desembolso')}${chip('capSetOrden','costo','Menor costo',orden==='costo')}</div>
+    <div><span>Vista</span>${chip('capSetVista','compacta','Compacta',compacta)}${chip('capSetVista','detallada','Detallada',!compacta)}</div></div>`;
   const noAp = mal.length ? `<details class="cap-noap"${grupos.length?'':' open'}><summary>No aplican (${mal.length}) y por qué</summary>
       ${mal.map(f=>`<div class="cap-noap-row"><b>${f.entidad}</b> <span>${f.nombre||''}</span><em>${f.error}</em></div>`).join('')}</details>` : '';
   if(!grupos.length && !mal.length){ box.innerHTML = '<div class="cap-pend">Ninguna entidad atiende este caso todavía.</div>'; }
-  else box.innerHTML = (grupos.length ? `<div class="cmp-wrap"><table class="cmp-table cmp-res"><thead><tr><th>Entidad y producto</th><th>Cuota y tasa</th><th>Monto del crédito</th><th>Costos del crédito <span class="cap-help abajo" tabindex="0" data-tip="Lo que la entidad descuenta del crédito al desembolsar: fianza, estudio, seguros, intereses anticipados y similares.">?</span></th><th>Desembolso estimado <span class="cap-help abajo" tabindex="0" data-tip="Lo que le llega al cliente después de los costos y de pagar las carteras y saneamientos.">?</span></th></tr></thead><tbody>
+  else box.innerHTML = (grupos.length ? destacados + barra + `<div class="cmp-wrap"><table class="cmp-table cmp-res${compacta?' cap-compacta':''}"><thead><tr><th>Entidad y producto</th><th>Tasa y plazo</th><th>Monto del crédito</th><th>Costos del crédito <span class="cap-help abajo" tabindex="0" data-tip="Lo que la entidad descuenta del crédito al desembolsar: fianza, estudio, seguros, intereses anticipados y similares.">?</span></th><th>Desembolso estimado <span class="cap-help abajo" tabindex="0" data-tip="Lo que le llega al cliente después de los costos y de pagar las carteras y saneamientos.">?</span></th></tr></thead><tbody>
     ${filasHTML}
-    </tbody></table></div>` : '<div class="cap-pend">Ninguna entidad aplica para este caso.</div>') + noAp;
+    </tbody></table></div>` + (c.compras ? `<div class="cap-nota-compras">Los desembolsos ya descuentan compras y saneamientos por ${capPesos(c.compras)}.</div>` : '') : '<div class="cap-pend">Ninguna entidad aplica para este caso.</div>') + noAp;
   document.getElementById('cap-pend').innerHTML = ''
     + (capDescLeidos.some(d=>d.compra && !d.saldoCompra) ? `<div class="cap-aviso"><strong>Falta el saldo a recoger de: ${capDescLeidos.filter(d=>d.compra && !d.saldoCompra).map(d=>capEsc(d.n)).join(', ')}.</strong> Escríbelo debajo de cada crédito marcado (sale de centrales o del certificado de deuda). Mientras tanto el desembolso no lo descuenta.</div>` : '')
     + `<div class="cap-aviso">Valores aproximados. El monto, la tasa y el perfil final los define el estudio de cada entidad.</div>`;
 }
+
+function capVista(){ try{ return localStorage.getItem('capVista') || 'compacta'; }catch(e){ return window._capVista || 'compacta'; } }
+function capSetVista(v){ try{ localStorage.setItem('capVista', v); }catch(e){} window._capVista = v; capCalcular(); }
+function capSetOrden(v){ document.getElementById('cap-orden').value = v; capCalcular(); }
 
 function capVerVariantes(gi, btn){
   const rows = document.querySelectorAll('#cap-tabla tr.cap-var[data-g="'+gi+'"]'), abrir = rows.length && rows[0].style.display==='none';
@@ -2407,7 +2476,7 @@ function capFlagAjustes(pag){
   const cambios = [
     v('cap-prod-credia')!=='est', !document.getElementById('cap-tasa-solux').disabled && v('cap-tasa-solux')!=='kp3',
     v('cap-tasa-excel')!=='0.0168', pag!=='casur' && v('cap-tasa-ban100')!=='0.0146', (v('cap-tasa-pich')||'').trim()!=='1,33',
-    (v('cap-margen')||'').replace(/[^\d]/g,'')!=='', v('cap-norma')!=='auto', v('cap-orden')!=='sugerido',
+    (v('cap-margen')||'').replace(/[^\d]/g,'')!=='', v('cap-norma')!=='auto',
     pag==='sed' && v('cap-fintra-linea')!=='campana', pag==='sed' && v('cap-cond-suenos')!=='gen'
   ].filter(Boolean).length;
   const fl = document.getElementById('cap-aj-flag'); if(fl) fl.textContent = cambios ? '(con cambios)' : '';
