@@ -2473,6 +2473,8 @@ function capFintra(c){
   return out;
 }
 
+// Regla Credixpertos: si la plata libre (después de costos y de las carteras) da menos de $1.000.000, el caso no pasa por ninguna entidad.
+const CAP_DESEMBOLSO_MIN = 1000000;
 function capCalcular(){
   const box = document.getElementById('cap-tabla'); if(!box) return;
   const pag = document.getElementById('cap-pag').value;
@@ -2500,6 +2502,7 @@ function capCalcular(){
     const e = _pols.find(x=>x.entidad===f.entidad);
     if(c.embargo && e && e.embargo==='NO') return {...f, error:'No acepta embargo en colilla.'};
     if(!f.error && f.desembolso<=0) return {...f, error: c.compras>0 ? 'El crédito no alcanza a cubrir las compras de cartera y los costos.' : 'La capacidad no alcanza para un crédito.'};
+    if(!f.error && f.desembolso<CAP_DESEMBOLSO_MIN) return {...f, error: c.compras>0 ? 'Después de pagar las carteras y los costos le quedan menos de $1.000.000 libres.' : 'El desembolso da menos de $1.000.000, el mínimo para radicar.'};
     return f; });
   const {pags:_pg} = loadData();
   const filaM = _pg.find(p=>normTxt(p.nombre).includes(pag==='fondos_priv'?'fondos':(pag==='cagen_tegen'||pag==='mindefensa')?'cagen':pag==='sed'?'sed':pag));
