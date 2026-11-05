@@ -545,6 +545,10 @@ tr.cap-var td{background:#F8FAFC}
 .slip-tit{flex:1;min-width:0}
 .slip-pag{font-size:24px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;line-height:1.1}
 .slip-sub{font-size:12.5px;color:#B2E5E5;margin-top:3px}
+.slip-cap{background:var(--cx);color:#fff;border-radius:10px;padding:8px 14px;text-align:right;min-width:170px}
+.slip-cap span{display:block;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.3px;opacity:.9}
+.slip-cap b{display:block;font-size:24px;font-weight:800;line-height:1.15}.slip-cap b.neg{color:#FECACA}
+.slip .slip-cap small{display:block;font-size:11.5px;color:#fff;font-weight:600}
 .slip-per{text-align:right;font-size:12px;color:#B2E5E5}.slip-per b{display:block;font-size:15px;color:#fff;text-transform:uppercase}
 .slip-cli{display:flex;flex-wrap:wrap;gap:6px 28px;padding:10px 18px;background:#F8FAFC;border-bottom:1px dashed #CBD5E0}
 .slip-cli span{display:block;font-size:10.5px;color:#6B7280;font-weight:700;text-transform:uppercase;letter-spacing:.3px}.slip-cli b{font-size:14px;color:var(--dark)}
@@ -567,11 +571,6 @@ tr.cap-var td{background:#F8FAFC}
 .slip td.cap-saldo{min-width:130px}
 .slip td.cap-saldo input{width:100%;padding:5px 8px;border:1.5px solid #6EE7B7;border-radius:6px;font-size:13px;font-family:inherit}
 .slip .sl-guion{color:#CBD5E0}
-.slip td.sl-tipo{white-space:nowrap}
-.slip .sl-tag{display:inline-block;font-size:11.5px;font-weight:700;border-radius:999px;padding:3px 10px;background:#F1F5F9;color:#4B5563}
-.slip .sl-tag-ley{background:#EFF6FF;color:#1E40AF}.slip .sl-tag-libranza{background:#ECFDF5;color:#065F46}.slip .sl-tag-embargo{background:#FEF2F2;color:#B91C1C}
-.slip .sl-cambiar{border:0;background:none;color:#6B7280;font-size:11px;text-decoration:underline;cursor:pointer;margin-left:6px;padding:0;font-family:inherit}
-.slip .sl-cambiar:hover{color:var(--cx-d)}
 .slip .sl-cuo-m{display:none}
 @media (max-width:640px){.slip .sl-cuo-m{display:block}}
 .slip .sl-marca{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:7px;background:#CBD5E0;vertical-align:middle}
@@ -582,7 +581,7 @@ tr.cap-var td{background:#F8FAFC}
 .slip-res{display:flex;flex-wrap:wrap;gap:8px;padding:10px 18px 14px;border-top:1px dashed #CBD5E0}
 .slip-res span{font-size:12px;border-radius:999px;padding:4px 10px;background:#F1F5F9;color:#374151}.slip-res b{margin-left:4px}
 .slip-res .sl-ley{background:#EFF6FF;color:#1E40AF}.slip-res .sl-libranza{background:#ECFDF5;color:#065F46}.slip-res .sl-embargo{background:#FEF2F2;color:#B91C1C}
-@media (max-width:640px){.slip-pag{font-size:19px}.slip-head{flex-wrap:wrap;gap:8px}.slip-tit{flex-basis:100%}.slip-per{text-align:left}}
+@media (max-width:640px){.slip-pag{font-size:19px}.slip-head{flex-wrap:wrap;gap:8px}.slip-tit{flex-basis:100%}.slip-per{text-align:left}.slip-cap{flex-basis:100%;text-align:left}}
 .cap-step{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:800;color:var(--dark);text-transform:uppercase;letter-spacing:.4px;margin:16px 0 10px;padding-top:12px;border-top:1px solid #E5E7EB}
 .cap-step:first-child{margin-top:0;padding-top:0;border-top:0}
 .cap-wiz-aviso + .cap-step{margin-top:0;padding-top:0;border-top:0}
@@ -1824,7 +1823,7 @@ function capParseCremil(lineasTxt){
 function capNuevoEstudio(){
   capDescLeidos = []; capColillaInfo = null; capExtras = []; capLeyAuto = null; capUltimo = null;
   const box = document.getElementById('cap-leido'); box.className = ''; box.innerHTML = '';
-  const cv = document.getElementById('cap-colilla-vista'); if(cv) cv.innerHTML = '';
+  const cv = document.getElementById('cap-colilla-vista'); if(cv) cv.innerHTML = ''; capCapSlip = null;
   ['cap-ingreso','cap-ley','cap-actuales','cap-compras','cap-edad','cap-score','cap-antig','cap-margen','ch-in-nom','ch-in-ced','ch-in-tel','ch-in-obs'].forEach(id=>{ const el = document.getElementById(id); if(el) el.value = ''; });
   const def = {'cap-pag':'colpensiones','cap-rep':'sin','cap-plazo':'144','cap-contrato':'propiedad','cap-sed':'Antioquia (Seduca)','cap-fondo':'Protección',
     'cap-norma':'auto','cap-orden':'sugerido','cap-prod-credia':'est','cap-tasa-excel':'0.0168','cap-tasa-ban100':'0.0146','cap-fga-ban100':'0.15','cap-tasa-pich':'1,33','cap-fintra-linea':'campana'};
@@ -1904,10 +1903,17 @@ function capPeriodoFmt(t){
   const i = ['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'].indexOf(ult[1].toLowerCase());
   return CAP_MESES_LARGO[i]+' de '+ult[2];
 }
-const TIPOS_CORTO = {ley:'De ley', fijo:'Se queda', libranza:'Crédito', embargo:'Embargo'};
 const CAP_PAG_LARGO = {colpensiones:'Administradora Colombiana de Pensiones', fopep:'Fondo de Pensiones Públicas del Nivel Nacional', fiduprevisora:'Fondo de Prestaciones Sociales del Magisterio',
   fondos_priv:'Fondo de pensiones', casur:'Caja de Sueldos de Retiro de la Policía Nacional', cremil:'Caja de Retiro de las Fuerzas Militares',
   cagen_tegen:'Policía Nacional · pensionados por invalidez', mindefensa:'Ministerio de Defensa · pensionados (DIVRI)', sed:'Secretaría de Educación'};
+// Capacidad en el encabezado de la colilla: se ve apenas se carga y cambia con cada compra marcada.
+let capCapSlip = null;
+function capPintarCapSlip(){
+  const el = document.getElementById('slip-cap'); if(!el) return;
+  const x = capCapSlip;
+  el.innerHTML = x ? `<span>Capacidad disponible</span><b class="${x.cap<=0?'neg':''}">${capPesos(x.cap)}</b><small>${capEsc(capNormaNom(x.norma))}</small>` : '';
+  el.style.display = x ? '' : 'none';
+}
 function capPintarLeido(){
   const r = capColillaInfo, vista = document.getElementById('cap-colilla-vista'); if(!r){ if(vista) vista.innerHTML=''; return; }
   const emb = capDescLeidos.filter(d=>d.tipo==='embargo');
@@ -1930,26 +1936,26 @@ function capPintarLeido(){
   const dedFilas = capDescLeidos.map((d,i)=>`<tr class="cap-desc sl-${d.tipo}${d.compra?' sl-compra':''}">
       <td><span class="sl-marca"></span>${capEsc(d.n)}${d.cuotas?`<small class="sl-cuo-m">${d.cuotas} cuotas pendientes</small>`:''}${d.unaVez?' <small>solo este mes</small>':''}${d.saldo?`<small>Saldo en colilla ${capPesos(d.saldo)}</small>`:''}</td>
       <td class="sl-cuo">${d.cuotas?d.cuotas:''}</td>
-      <td class="sl-tipo">${d.editTipo ? `<select onchange="capDescLeidos[${i}].tipo=this.value;capDescLeidos[${i}].editTipo=false;if(this.value!=='libranza')capDescLeidos[${i}].compra=false;capPintarLeido();capAplicarDescuentos()">${Object.entries(TIPOS_DESC).map(([k,v])=>`<option value="${k}" ${d.tipo===k?'selected':''}>${v}</option>`).join('')}</select>`
-        : `<span class="sl-tag sl-tag-${d.tipo}">${TIPOS_CORTO[d.tipo]}</span><button type="button" class="sl-cambiar" title="Corregir el tipo si la herramienta lo leyó mal" onclick="capDescLeidos[${i}].editTipo=true;capPintarLeido()">cambiar</button>`}</td>
+      <td><select onchange="capDescLeidos[${i}].tipo=this.value;if(this.value!=='libranza')capDescLeidos[${i}].compra=false;capPintarLeido();capAplicarDescuentos()">${Object.entries(TIPOS_DESC).map(([k,v])=>`<option value="${k}" ${d.tipo===k?'selected':''}>${v}</option>`).join('')}</select></td>
       <td class="sl-num">${capPesos(d.v)}</td>
-      <td class="sl-chk">${d.tipo==='libranza'?`<input type="checkbox" title="Se compra" ${d.compra?'checked':''} onchange="capMarcarCompra(${i},this.checked)">`:''}</td>
-      <td class="cap-saldo">${d.compra?`<input inputmode="numeric" placeholder="Saldo $ 0" value="${d.saldoCompra?'$ '+Math.round(d.saldoCompra).toLocaleString('es-CO'):''}" oninput="capSaldoItem(${i},this)">`:''}</td></tr>`).join('');
+      <td class="sl-chk"><input type="checkbox" title="Se compra" ${d.compra?'checked':''} ${d.tipo==='libranza'?'':'disabled'} onchange="capMarcarCompra(${i},this.checked)"></td>
+      <td class="cap-saldo">${d.compra?`<input inputmode="numeric" placeholder="Saldo $ 0" value="${d.saldoCompra?'$ '+Math.round(d.saldoCompra).toLocaleString('es-CO'):''}" oninput="capSaldoItem(${i},this)">`:'<span class="sl-guion">—</span>'}</td></tr>`).join('');
   vista.innerHTML = `<div class="slip">
     <div class="slip-head">${logo?`<div class="slip-logo">${logo}</div>`:''}<div class="slip-tit"><div class="slip-pag">${capEsc(titulo)}</div><div class="slip-sub">${capEsc(sub)}</div></div>
-      <div class="slip-per"><span>Comprobante de pago</span><b>${capEsc(capPeriodoFmt(r.periodo))}</b></div></div>
+      <div class="slip-per"><span>Comprobante de pago</span><b>${capEsc(capPeriodoFmt(r.periodo))}</b></div><div class="slip-cap" id="slip-cap"></div></div>
     <div class="slip-cli"><div><span>Cliente</span><b>${capEsc(cli.nombre||'No se pudo leer')}</b></div><div><span>Cédula</span><b>${cli.cedula?capCedFmt(cli.cedula):'No se pudo leer'}</b></div>
       ${pag==='sed'?`<div><span>Cargo</span><b>${capEsc(r.tipo||'')}</b></div>`:''}</div>
     ${r.aviso?`<div class="slip-alerta">${r.aviso}</div>`:''}${emb.length?`<div class="slip-alerta">Embargo en colilla: ${emb.map(d=>capEsc(d.n)).join(', ')}</div>`:''}
     <div class="slip-sec">Devengados</div>
     <table class="slip-tab"><tbody>${devFilas}</tbody><tfoot><tr><td>Total devengado</td><td class="sl-num">${capPesos(totDev)}</td></tr></tfoot></table>
-    <div class="slip-sec">Deducciones <small>Marca los créditos que se recogen con compra de cartera. Si alguna línea quedó mal clasificada, dale cambiar.</small></div>
+    <div class="slip-sec">Deducciones <small>Revisa el tipo de cada una y marca las que se recogen con compra de cartera.</small></div>
     <div class="slip-wrap"><table class="slip-tab slip-ded"><thead><tr><th>Concepto</th><th>Cuotas pend.</th><th>Tipo</th><th class="sl-num">Valor</th><th>Comprar</th><th>Saldo a recoger</th></tr></thead>
       <tbody>${dedFilas || '<tr><td colspan="6">No tiene deducciones.</td></tr>'}</tbody>
       <tfoot><tr><td colspan="3">Total deducciones</td><td class="sl-num">${capPesos(totDed)}</td><td colspan="2"></td></tr>
         <tr class="slip-neto"><td colspan="3">Neto a pagar</td><td class="sl-num">${capPesos(totDev-totDed)}</td><td colspan="2"></td></tr></tfoot></table></div>
     <div class="slip-res"><span class="sl-ley">De ley <b>${capPesos(tot('ley'))}</b></span><span class="sl-fijo">Se quedan <b>${capPesos(tot('fijo')+tot('libranza')-comp)}</b></span><span class="sl-libranza">Se compran <b>${capPesos(comp)}</b></span>${tot('embargo')?`<span class="sl-embargo">Embargos <b>${capPesos(tot('embargo'))}</b></span>`:''}</div>
   </div>`;
+  capPintarCapSlip();
 }
 // Compras de cartera: saldo por cada crédito marcado en la colilla + saneamientos u otras carteras por fuera.
 let capExtras = [];
@@ -2479,6 +2485,7 @@ function capCalcular(){
   c.norma = norma;
   c.cap = capCapacidad(norma, c.ingreso, c.ley, c.actuales);
   c.embargo = capDescLeidos.some(d=>d.tipo==='embargo');
+  capCapSlip = c.ingreso ? {cap:c.cap, norma} : null; capPintarCapSlip();
   const kp = document.getElementById('cap-kpis');
   if(!c.ingreso){ kp.innerHTML=''; box.innerHTML='<div class="cap-pend">Escribe el valor de la pensión o salario para calcular.</div>'; document.getElementById('cap-pend').innerHTML=''; return; }
   if(!c.edad){ kp.innerHTML=''; box.innerHTML='<div class="cap-pend">Escribe la edad del cliente para calcular: cada entidad tiene topes de edad y de plazo.</div>'; document.getElementById('cap-pend').innerHTML=''; capUltimo=null; return; }
