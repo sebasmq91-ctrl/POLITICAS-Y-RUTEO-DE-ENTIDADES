@@ -497,6 +497,8 @@ tr.cap-var td{background:#F8FAFC}
 .cap-noap-row span{color:#6B7280}
 .cap-noap-row em{flex-basis:100%;font-style:normal;color:#B45309}
 .cap-wiz-aviso{background:#ECFDF5;border:1px solid #6EE7B7;color:#065F46;border-radius:8px;padding:8px 10px;font-size:12.5px;margin-bottom:12px;line-height:1.45}
+.cap-reset-btn{display:block;width:100%;margin-top:10px;background:#fff;border:1.5px solid #FCA5A5;color:#B91C1C;border-radius:8px;padding:8px 10px;font-size:12.5px;font-weight:700;cursor:pointer;font-family:inherit}
+.cap-reset-btn:hover{background:#FEF2F2}
 .cap-step{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:800;color:var(--dark);text-transform:uppercase;letter-spacing:.4px;margin:16px 0 10px;padding-top:12px;border-top:1px solid #E5E7EB}
 .cap-step:first-child{margin-top:0;padding-top:0;border-top:0}
 .cap-wiz-aviso + .cap-step{margin-top:0;padding-top:0;border-top:0}
@@ -778,6 +780,7 @@ tr.cap-var td{background:#F8FAFC}
         <label class="cap-load-btn">Cargar colilla (PDF o foto)<input type="file" id="cap-file" accept="application/pdf,.pdf,image/*" onchange="capLeerColilla(this.files[0])"></label>
         <small>Se lee en este computador; el archivo no se sube a ningún lado. Revisa los valores antes de calcular.</small>
         <div id="cap-leido"></div>
+        <button type="button" class="cap-reset-btn" id="cap-reset" style="display:none" onclick="capNuevoEstudio()">Quitar colilla y empezar otro estudio</button>
       </div>
       <div class="cap-step"><span>2</span>Cliente</div>
       <div class="cap-f"><label>Pagaduría</label>
@@ -1704,6 +1707,25 @@ function capParseCremil(lineasTxt){
     aviso};
 }
 
+// Deja la pestaña en blanco para el siguiente cliente (no guarda nada).
+function capNuevoEstudio(){
+  capDescLeidos = []; capColillaInfo = null; capExtras = []; capLeyAuto = null; capUltimo = null;
+  const box = document.getElementById('cap-leido'); box.className = ''; box.innerHTML = '';
+  ['cap-ingreso','cap-ley','cap-actuales','cap-compras','cap-edad','cap-score','cap-antig','cap-margen','ch-in-nom','ch-in-ced','ch-in-tel','ch-in-obs'].forEach(id=>{ const el = document.getElementById(id); if(el) el.value = ''; });
+  const def = {'cap-pag':'colpensiones','cap-rep':'sin','cap-plazo':'144','cap-contrato':'propiedad','cap-sed':'Antioquia (Seduca)','cap-fondo':'Protección',
+    'cap-norma':'auto','cap-orden':'sugerido','cap-prod-credia':'est','cap-tasa-excel':'0.0168','cap-tasa-ban100':'0.0146','cap-tasa-pich':'1,33','cap-fintra-linea':'campana'};
+  Object.entries(def).forEach(([id,v])=>{ const el = document.getElementById(id); if(el) el.value = v; });
+  const sx = document.getElementById('cap-tasa-solux'); if(sx){ sx.disabled = false; sx.value = 'kp3'; delete sx.dataset.antes; }
+  const sb = document.getElementById('cap-tasa-ban100'); if(sb){ sb.disabled = false; delete sb.dataset.antes; }
+  const cs = document.getElementById('cap-cond-suenos'); if(cs){ cs.value = 'gen'; if(typeof capCondSuenos==='function') capCondSuenos(); }
+  const ed = document.getElementById('cap-edad'); if(ed) ed.placeholder = 'Años';
+  const wa = document.getElementById('cap-wiz-aviso'); if(wa) wa.style.display = 'none';
+  const aj = document.getElementById('cap-ajustes'); if(aj) aj.open = false;
+  document.getElementById('cap-reset').style.display = 'none';
+  capPintarExtras(); capCambioPag();
+  document.getElementById('cap-form').scrollIntoView({behavior:'smooth', block:'start'});
+}
+
 async function capLeerColilla(file){
   const box = document.getElementById('cap-leido'); if(!file) return;
   box.className='cap-leido'; box.innerHTML='Leyendo la colilla...';
@@ -1751,6 +1773,7 @@ async function capLeerColilla(file){
     capExtras = []; capPintarExtras();
     r.cliente = capDatosCliente(txt);
     capColillaInfo = r;
+    document.getElementById('cap-reset').style.display = '';
     const ci = r.cliente; document.getElementById('ch-in-nom').value = ci.nombre; document.getElementById('ch-in-ced').value = capCedFmt(ci.cedula); document.getElementById('ch-in-tel').value = ''; document.getElementById('ch-in-obs').value = '';
     capPintarLeido(); capAplicarDescuentos();
   }catch(e){ box.innerHTML = `<span class="cap-err">${e.message}</span>`; }
