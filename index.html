@@ -567,6 +567,11 @@ tr.cap-var td{background:#F8FAFC}
 .slip td.cap-saldo{min-width:130px}
 .slip td.cap-saldo input{width:100%;padding:5px 8px;border:1.5px solid #6EE7B7;border-radius:6px;font-size:13px;font-family:inherit}
 .slip .sl-guion{color:#CBD5E0}
+.slip td.sl-tipo{white-space:nowrap}
+.slip .sl-tag{display:inline-block;font-size:11.5px;font-weight:700;border-radius:999px;padding:3px 10px;background:#F1F5F9;color:#4B5563}
+.slip .sl-tag-ley{background:#EFF6FF;color:#1E40AF}.slip .sl-tag-libranza{background:#ECFDF5;color:#065F46}.slip .sl-tag-embargo{background:#FEF2F2;color:#B91C1C}
+.slip .sl-cambiar{border:0;background:none;color:#6B7280;font-size:11px;text-decoration:underline;cursor:pointer;margin-left:6px;padding:0;font-family:inherit}
+.slip .sl-cambiar:hover{color:var(--cx-d)}
 .slip .sl-cuo-m{display:none}
 @media (max-width:640px){.slip .sl-cuo-m{display:block}}
 .slip .sl-marca{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:7px;background:#CBD5E0;vertical-align:middle}
@@ -676,6 +681,9 @@ tr.cap-var td{background:#F8FAFC}
  .slip .slip-ded tbody tr.cap-desc td:first-child{grid-column:1/-1;font-weight:600}
  .slip .slip-ded tbody tr.cap-desc td.sl-cuo{display:none}
  .slip .slip-ded tbody tr.cap-desc:not(.sl-libranza) td.sl-chk{display:none}
+ .slip .slip-ded tbody tr.sl-compra{background:#F0FDF4}
+ .slip .slip-ded tbody tr.sl-embargo{background:#FEF2F2}
+ .slip .slip-ded tbody tr.cap-desc td{background:none!important}
  .slip .slip-ded tbody tr.cap-desc td.sl-chk{text-align:left}
  .slip .slip-ded tbody tr.cap-desc td.sl-chk::before{content:'Comprar ';font-size:11px;color:#6B7280;font-weight:700;vertical-align:middle}
  .slip .slip-ded tbody tr.cap-desc td.cap-saldo{min-width:0}
@@ -1896,6 +1904,7 @@ function capPeriodoFmt(t){
   const i = ['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'].indexOf(ult[1].toLowerCase());
   return CAP_MESES_LARGO[i]+' de '+ult[2];
 }
+const TIPOS_CORTO = {ley:'De ley', fijo:'Se queda', libranza:'Crédito', embargo:'Embargo'};
 const CAP_PAG_LARGO = {colpensiones:'Administradora Colombiana de Pensiones', fopep:'Fondo de Pensiones Públicas del Nivel Nacional', fiduprevisora:'Fondo de Prestaciones Sociales del Magisterio',
   fondos_priv:'Fondo de pensiones', casur:'Caja de Sueldos de Retiro de la Policía Nacional', cremil:'Caja de Retiro de las Fuerzas Militares',
   cagen_tegen:'Policía Nacional · pensionados por invalidez', mindefensa:'Ministerio de Defensa · pensionados (DIVRI)', sed:'Secretaría de Educación'};
@@ -1921,10 +1930,11 @@ function capPintarLeido(){
   const dedFilas = capDescLeidos.map((d,i)=>`<tr class="cap-desc sl-${d.tipo}${d.compra?' sl-compra':''}">
       <td><span class="sl-marca"></span>${capEsc(d.n)}${d.cuotas?`<small class="sl-cuo-m">${d.cuotas} cuotas pendientes</small>`:''}${d.unaVez?' <small>solo este mes</small>':''}${d.saldo?`<small>Saldo en colilla ${capPesos(d.saldo)}</small>`:''}</td>
       <td class="sl-cuo">${d.cuotas?d.cuotas:''}</td>
-      <td><select onchange="capDescLeidos[${i}].tipo=this.value;if(this.value!=='libranza')capDescLeidos[${i}].compra=false;capPintarLeido();capAplicarDescuentos()">${Object.entries(TIPOS_DESC).map(([k,v])=>`<option value="${k}" ${d.tipo===k?'selected':''}>${v}</option>`).join('')}</select></td>
+      <td class="sl-tipo">${d.editTipo ? `<select onchange="capDescLeidos[${i}].tipo=this.value;capDescLeidos[${i}].editTipo=false;if(this.value!=='libranza')capDescLeidos[${i}].compra=false;capPintarLeido();capAplicarDescuentos()">${Object.entries(TIPOS_DESC).map(([k,v])=>`<option value="${k}" ${d.tipo===k?'selected':''}>${v}</option>`).join('')}</select>`
+        : `<span class="sl-tag sl-tag-${d.tipo}">${TIPOS_CORTO[d.tipo]}</span><button type="button" class="sl-cambiar" title="Corregir el tipo si la herramienta lo leyó mal" onclick="capDescLeidos[${i}].editTipo=true;capPintarLeido()">cambiar</button>`}</td>
       <td class="sl-num">${capPesos(d.v)}</td>
-      <td class="sl-chk"><input type="checkbox" title="Se compra" ${d.compra?'checked':''} ${d.tipo==='libranza'?'':'disabled'} onchange="capMarcarCompra(${i},this.checked)"></td>
-      <td class="cap-saldo">${d.compra?`<input inputmode="numeric" placeholder="Saldo $ 0" value="${d.saldoCompra?'$ '+Math.round(d.saldoCompra).toLocaleString('es-CO'):''}" oninput="capSaldoItem(${i},this)">`:'<span class="sl-guion">—</span>'}</td></tr>`).join('');
+      <td class="sl-chk">${d.tipo==='libranza'?`<input type="checkbox" title="Se compra" ${d.compra?'checked':''} onchange="capMarcarCompra(${i},this.checked)">`:''}</td>
+      <td class="cap-saldo">${d.compra?`<input inputmode="numeric" placeholder="Saldo $ 0" value="${d.saldoCompra?'$ '+Math.round(d.saldoCompra).toLocaleString('es-CO'):''}" oninput="capSaldoItem(${i},this)">`:''}</td></tr>`).join('');
   vista.innerHTML = `<div class="slip">
     <div class="slip-head">${logo?`<div class="slip-logo">${logo}</div>`:''}<div class="slip-tit"><div class="slip-pag">${capEsc(titulo)}</div><div class="slip-sub">${capEsc(sub)}</div></div>
       <div class="slip-per"><span>Comprobante de pago</span><b>${capEsc(capPeriodoFmt(r.periodo))}</b></div></div>
@@ -1933,7 +1943,7 @@ function capPintarLeido(){
     ${r.aviso?`<div class="slip-alerta">${r.aviso}</div>`:''}${emb.length?`<div class="slip-alerta">Embargo en colilla: ${emb.map(d=>capEsc(d.n)).join(', ')}</div>`:''}
     <div class="slip-sec">Devengados</div>
     <table class="slip-tab"><tbody>${devFilas}</tbody><tfoot><tr><td>Total devengado</td><td class="sl-num">${capPesos(totDev)}</td></tr></tfoot></table>
-    <div class="slip-sec">Deducciones <small>Revisa el tipo de cada una y marca las que se recogen con compra de cartera.</small></div>
+    <div class="slip-sec">Deducciones <small>Marca los créditos que se recogen con compra de cartera. Si alguna línea quedó mal clasificada, dale cambiar.</small></div>
     <div class="slip-wrap"><table class="slip-tab slip-ded"><thead><tr><th>Concepto</th><th>Cuotas pend.</th><th>Tipo</th><th class="sl-num">Valor</th><th>Comprar</th><th>Saldo a recoger</th></tr></thead>
       <tbody>${dedFilas || '<tr><td colspan="6">No tiene deducciones.</td></tr>'}</tbody>
       <tfoot><tr><td colspan="3">Total deducciones</td><td class="sl-num">${capPesos(totDed)}</td><td colspan="2"></td></tr>
