@@ -730,7 +730,7 @@ tr.cap-var td{background:#F8FAFC}
             <li>Pensionado: tipo de pensión (vejez, sustitución o invalidez y porcentaje de PCL). Docente: tipo de contrato (propiedad, provisional vacante definitiva, período de prueba o temporales) y tiempo en el cargo.</li>
             <li>¿Está reportado en centrales? ¿Con quién (banco, cooperativa, libranza) y desde hace cuánto?</li>
             <li>¿Le descuentan algún embargo en el desprendible? ¿Tiene procesos judiciales o penales?</li>
-            <li>¿Qué necesita: plata libre o comprar cartera? ¿Cuánto? ¿Qué libranzas tiene vigentes y con qué entidades?</li>
+            <li>¿Qué libranzas tiene vigentes y con qué entidades? Si pregunta cuánto le sale: cuánto le llega de mesada y cuánto le descuentan hoy, para darle un rango aproximado en Capacidad.</li>
           </ol>
         </div>
         <div><strong>Qué pedir con la colilla</strong>
@@ -739,6 +739,7 @@ tr.cap-var td{background:#F8FAFC}
             <li>Embargos que aparecen en el desprendible.</li>
             <li>Libranzas actuales y a qué entidad pagan (sirven para compra de cartera).</li>
             <li>Pagaduría real y, en docentes, vinculación y fecha de ingreso.</li>
+            <li>Para la consulta: cédula, correo, celular y fecha de nacimiento.</li>
           </ul>
           <div class="wiz-guia-n">Lo que diga el cliente sobre reportes es un primer filtro. La consulta de centrales de la analista lo confirma.</div>
         </div>
@@ -2905,29 +2906,6 @@ const PASOS = [
       {val:'si',  label:'Sí tiene proceso penal activo', clase:'opt-danger'},
     ]
   },
-  {
-    id:'necesidad',
-    pregunta:'¿Qué necesita el cliente?',
-    hint:'Descarta las entidades que no hacen libre inversión o compra de cartera.',
-    opciones:[
-      {val:'libre_inversion', label:'Libre inversión (dinero nuevo)'},
-      {val:'compra_cartera',  label:'Compra de cartera', desc:'Pagar obligaciones que ya tiene'},
-      {val:'ambos',           label:'Libre inversión y compra de cartera'},
-    ]
-  },
-  {
-    id:'monto',
-    pregunta:'¿Qué monto busca el cliente?',
-    hint:'Se compara con el monto máximo de cada entidad. Si aún no lo sabe, elige la última opción.',
-    opciones:[
-      {val:'hasta50', label:'Hasta $50 millones'},
-      {val:'50a100',  label:'$50 – $100 millones'},
-      {val:'100a150', label:'$100 – $150 millones'},
-      {val:'150a250', label:'$150 – $250 millones'},
-      {val:'mas250',  label:'Más de $250 millones'},
-      {val:'abierto', label:'Aún no lo sabe: mostrar el máximo posible'},
-    ]
-  },
 ];
 
 let wizState = {};
@@ -3252,21 +3230,12 @@ function evaluarPerfil(s, pols, pags){
       else if(v!=='SI') avisos.push('Sin dato sobre '+lbl+': confirmar con la entidad.');
     }
 
-    // Necesidad del cliente
-    if(necesidad==='libre_inversion' || necesidad==='ambos'){
-      if(e.libre_inversion==='NO') return {motivo:'No hace libre inversión'};
-      if(e.libre_inversion==='COND') avisos.push('Libre inversión: con condiciones.');
-    }
-    if(necesidad==='compra_cartera' || necesidad==='ambos'){
-      if(e.compra_cartera==='NO') return {motivo:'No hace compra de cartera'};
-      if(e.compra_cartera==='COND') avisos.push('Compra de cartera: con condiciones.');
-    }
-
-    // Monto
-    if(mb){
-      if(e.monto_max < mb[0]) return {motivo:'Monto máximo $'+e.monto_max+'M: el cliente busca desde $'+mb[0]+'M'};
-      if(e.monto_max < mb[1]) avisos.push('Monto máximo $'+e.monto_max+'M: puede no cubrir todo lo solicitado.');
-    }
+    // Libre inversión y compra de cartera: ya no se preguntan (el cliente casi siempre busca las dos y el estudio define cuál le da).
+    // No descartan la entidad; solo avisan cuando la entidad no hace una de las dos.
+    if(e.libre_inversion==='NO') avisos.push('No hace libre inversión: solo compra de cartera.');
+    else if(e.libre_inversion==='COND') avisos.push('Libre inversión: con condiciones.');
+    if(e.compra_cartera==='NO') avisos.push('No hace compra de cartera: solo libre inversión.');
+    else if(e.compra_cartera==='COND') avisos.push('Compra de cartera: con condiciones.');
 
     // Regla Credixpertos
     const r = evaluarReglaCX(e, s);
