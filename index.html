@@ -582,6 +582,7 @@ tr.cap-var td{background:#F8FAFC}
 .slip-res span{font-size:12px;border-radius:999px;padding:4px 10px;background:#F1F5F9;color:#374151}.slip-res b{margin-left:4px}
 .slip-res .sl-ley{background:#EFF6FF;color:#1E40AF}.slip-res .sl-libranza{background:#ECFDF5;color:#065F46}.slip-res .sl-embargo{background:#FEF2F2;color:#B91C1C}
 @media (max-width:640px){.slip-pag{font-size:19px}.slip-head{flex-wrap:wrap;gap:8px}.slip-tit{flex-basis:100%}.slip-per{text-align:left}.slip-cap{flex-basis:100%;text-align:left}}
+.wiz-edad{display:flex;align-items:center;gap:12px;margin:6px 0 4px}.wiz-edad input{width:160px;font-size:26px;font-weight:700;padding:12px 16px;border:2px solid #CBD5E0;border-radius:12px;font-family:inherit;color:#072B30}.wiz-edad input:focus{outline:none;border-color:#12CBE3}.wiz-edad span{font-size:18px;font-weight:600;color:#4A5568}
 .cap-step{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:800;color:var(--dark);text-transform:uppercase;letter-spacing:.4px;margin:16px 0 10px;padding-top:12px;border-top:1px solid #E5E7EB}
 .cap-step:first-child{margin-top:0;padding-top:0;border-top:0}
 .cap-wiz-aviso + .cap-step{margin-top:0;padding-top:0;border-top:0}
@@ -1225,10 +1226,10 @@ function capCambioPag(){
   document.getElementById('cap-fondo-wrap').style.display = pag==='fondos_priv' ? '' : 'none';
   document.getElementById('cap-sed-wrap').style.display = pag==='sed' ? '' : 'none';
   document.getElementById('cap-antig-wrap').style.display = pag==='sed' ? '' : 'none';
-  // BAN100 en CASUR: tasa fija 1,79 %, no se puede cambiar.
+  // BAN100 en CASUR: arranca en 1,79 % (tasa vigente), pero se puede cambiar si la política lo permite.
   const selB = document.getElementById('cap-tasa-ban100'), txB = document.getElementById('cap-ban100-txt');
-  if(pag==='casur'){ if(!selB.disabled) selB.dataset.antes = selB.value; selB.value = '0.0179'; selB.disabled = true; txB.textContent = 'En CASUR, BAN100 maneja tasa fija de 1,79 %.'; }
-  else if(selB.disabled){ selB.disabled = false; selB.value = selB.dataset.antes || '0.0146'; txB.textContent = 'Depende de la pagaduría y de la política vigente.'; }
+  if(pag==='casur' && selB.dataset.casur!=='1'){ selB.dataset.antes = selB.value; selB.value = '0.0179'; selB.dataset.casur = '1'; txB.textContent = 'En CASUR la tasa vigente es 1,79 %. Cámbiala solo si BAN100 autoriza otra.'; }
+  else if(pag!=='casur' && selB.dataset.casur==='1'){ selB.dataset.casur = ''; selB.value = selB.dataset.antes || '0.0146'; txB.textContent = 'Depende de la pagaduría y de la política vigente.'; }
   document.getElementById('cap-suenos-wrap').style.display = pag==='sed' ? '' : 'none';
   document.getElementById('cap-fintra-wrap').style.display = pag==='sed' ? '' : 'none';
   capLeyRegla();
@@ -1830,7 +1831,7 @@ function capNuevoEstudio(){
     'cap-norma':'auto','cap-orden':'sugerido','cap-prod-credia':'est','cap-tasa-excel':'0.0168','cap-tasa-ban100':'0.0146','cap-fga-ban100':'0.15','cap-tasa-pich':'1,33','cap-fintra-linea':'campana'};
   Object.entries(def).forEach(([id,v])=>{ const el = document.getElementById(id); if(el) el.value = v; });
   const sx = document.getElementById('cap-tasa-solux'); if(sx){ sx.disabled = false; sx.value = 'kp3'; delete sx.dataset.antes; }
-  const sb = document.getElementById('cap-tasa-ban100'); if(sb){ sb.disabled = false; delete sb.dataset.antes; }
+  const sb = document.getElementById('cap-tasa-ban100'); if(sb){ sb.disabled = false; delete sb.dataset.antes; delete sb.dataset.casur; }
   const cs = document.getElementById('cap-cond-suenos'); if(cs){ cs.value = 'gen'; if(typeof capCondSuenos==='function') capCondSuenos(); }
   const ed = document.getElementById('cap-edad'); if(ed) ed.placeholder = 'Años';
   const wa = document.getElementById('cap-wiz-aviso'); if(wa) wa.style.display = 'none';
@@ -2147,7 +2148,7 @@ const LIQ_BAN100 = {
 function capBan100(c){
   const L = LIQ_BAN100, out = [];
   if(!L.pags.includes(c.pag) || (c.pag==='fondos_priv' && !L.fondos.includes(c.fondo))) return out;
-  const tasa = c.pag==='casur' ? 0.0179 : parseFloat(document.getElementById('cap-tasa-ban100').value);   // CASUR: tasa fija 1,79 %
+  const tasa = parseFloat(document.getElementById('cap-tasa-ban100').value);   // CASUR arranca en 1,79 %
   const ley = c.ley, otros = c.actuales, ing = c.ingreso;
   let cap, colchon, formula;
   if(c.pag==='cremil'){ colchon = 0; cap = ing/2 - (ley+otros); formula = 'CREMIL: ingreso ÷ 2 − todos los descuentos'; }
@@ -2582,7 +2583,7 @@ function capCalcular(){
     + `<div class="cap-aviso">Valores aproximados. El monto, la tasa y el perfil final los define el estudio de cada entidad.</div>`;
 }
 
-function capVista(){ try{ return localStorage.getItem('capVista') || 'compacta'; }catch(e){ return window._capVista || 'compacta'; } }
+function capVista(){ try{ return localStorage.getItem('capVista') || window._capVista || 'detallada'; }catch(e){ return window._capVista || 'detallada'; } }
 function capSetVista(v){ try{ localStorage.setItem('capVista', v); }catch(e){} window._capVista = v; capCalcular(); }
 function capSetOrden(v){ document.getElementById('cap-orden').value = v; capCalcular(); }
 
@@ -2605,7 +2606,7 @@ function capFlagAjustes(pag){
   const v = id => (document.getElementById(id)||{}).value;
   const cambios = [
     v('cap-prod-credia')!=='est', !document.getElementById('cap-tasa-solux').disabled && v('cap-tasa-solux')!=='kp3',
-    v('cap-tasa-excel')!=='0.0168', v('cap-fga-ban100')!=='0.15', pag!=='casur' && v('cap-tasa-ban100')!=='0.0146', (v('cap-tasa-pich')||'').trim()!=='1,33',
+    v('cap-tasa-excel')!=='0.0168', v('cap-fga-ban100')!=='0.15', v('cap-tasa-ban100')!==(pag==='casur'?'0.0179':'0.0146'), (v('cap-tasa-pich')||'').trim()!=='1,33',
     (v('cap-margen')||'').replace(/[^\d]/g,'')!=='', v('cap-norma')!=='auto',
     pag==='sed' && v('cap-fintra-linea')!=='campana', pag==='sed' && v('cap-cond-suenos')!=='gen'
   ].filter(Boolean).length;
@@ -2623,14 +2624,14 @@ function capDesdeWizard(){
   if(w.vinculacion) document.getElementById('cap-contrato').value = w.vinculacion;
   const ant = {menos2m:0, '2a4m':0.2, '4a6m':0.3, '6ma1a':0.5, '1a2a':1, '2a3a':2, '3a4a':3, mas4a:4};
   if(w.antiguedad_doc in ant) document.getElementById('cap-antig').value = ant[w.antiguedad_doc];
-  const eb = EDAD_BANDAS[w.edad];
-  const ed = document.getElementById('cap-edad'); ed.value = '';
+  const eb = edadBanda(w.edad), exacta = edadExacta(w.edad);
+  const ed = document.getElementById('cap-edad'); ed.value = exacta!==null ? exacta : '';
   ed.placeholder = eb ? 'Entre '+eb[0]+' y '+Math.min(eb[1],99) : 'Años';
   capCambioPag();
   capIrTab('capacidad');
   const aviso = document.getElementById('cap-wiz-aviso');
-  if(aviso){ aviso.style.display = ''; aviso.innerHTML = '<b>Datos traídos de Recomendar entidad.</b> Sube la colilla y escribe la edad exacta del cliente'+(eb?' (el asistente la tomó entre '+eb[0]+' y '+Math.min(eb[1],99)+' años)':'')+'.'; }
-  setTimeout(()=>ed.focus(), 200);
+  if(aviso){ aviso.style.display = ''; aviso.innerHTML = exacta!==null ? '<b>Datos traídos de Recomendar entidad</b>, con la edad de '+exacta+' años. Sube la colilla del cliente.' : '<b>Datos traídos de Recomendar entidad.</b> Sube la colilla y escribe la edad exacta del cliente'+(eb?' (el asistente la tomó entre '+eb[0]+' y '+Math.min(eb[1],99)+' años)':'')+'.'; }
+  if(exacta===null) setTimeout(()=>ed.focus(), 200);
 }
 
 // ── RESULTADO ESCOGIDO: ventana, impresión y PDF ─────────────────────────────
@@ -2867,16 +2868,10 @@ const PASOS = [
   },
   {
     id:'edad',
+    tipo:'numero',
     pregunta:'¿Cuál es la edad del cliente?',
-    hint:'La edad define el monto máximo y los plazos disponibles.',
-    opciones:[
-      {val:'menos65',  label:'Menos de 65 años'},
-      {val:'65a70',    label:'65 – 70 años'},
-      {val:'71a75',    label:'71 – 75 años'},
-      {val:'76a79',    label:'76 – 79 años'},
-      {val:'80a84',    label:'80 – 84 años'},
-      {val:'mas84',    label:'Más de 84 años', clase:'opt-danger'},
-    ]
+    hint:'Escribe la edad exacta en años. Define el monto máximo y los plazos, y pasa sola a Capacidad.',
+    opciones:[]
   },
   {
     id:'reporte',
@@ -2997,6 +2992,7 @@ function renderWizPaso() {
     <div class="wiz-card">
       <div class="wiz-question">${paso.pregunta}</div>
       <div class="wiz-hint">${paso.hint}</div>
+      ${paso.tipo==='numero' ? `<div class="wiz-edad"><input type="number" id="wiz-num-${paso.id}" min="18" max="110" step="1" inputmode="numeric" placeholder="Ej. 72" value="${valActual||''}" oninput="wizNumero('${paso.id}',this)" onkeydown="if(event.key==='Enter'&&!document.getElementById('btn-next').disabled)wizNext()"><span>años</span></div>` : ''}
       <div class="wiz-options" id="wiz-opts-${paso.id}">
         ${opciones.map(o => `
           <button class="wiz-opt ${o.clase||''} ${valActual===o.val?'selected':''}"
@@ -3020,6 +3016,11 @@ function renderWizPaso() {
     </div>`;
 }
 
+function wizNumero(pasoId, inp){
+  const n = edadExacta(inp.value), ok = n!==null && n>=18 && n<=110;
+  wizState[pasoId] = ok ? String(n) : '';
+  document.getElementById('btn-next').disabled = !ok;
+}
 function seleccionarOpcion(pasoId, val, btn) {
   wizState[pasoId] = val;
   document.querySelectorAll(`#wiz-opts-${pasoId} .wiz-opt`).forEach(b => b.classList.remove('selected'));
@@ -3035,6 +3036,7 @@ function wizNext() {
   wizPasoActual++;
   calcPasosFiltrados();
   renderWizPaso();
+  const ni = document.querySelector('.wiz-edad input'); if(ni) setTimeout(()=>ni.focus(), 50);
 }
 
 function wizBack() {
@@ -3050,6 +3052,10 @@ function wizBack() {
 // Rangos de edad por respuesta [mínima, máxima]. Se usa la mínima para descartar
 // y la máxima para avisar cuando el tope de la entidad cae dentro del rango.
 const EDAD_BANDAS = {menos65:[0,64],'65a70':[65,70],'71a75':[71,75],'76a79':[76,79],'80a84':[80,84],mas84:[85,120]};
+// La edad ahora se pide exacta. Los rangos se mantienen para abrir links viejos.
+const edadExacta = v => /^\d{1,3}$/.test(String(v||'')) ? parseInt(v,10) : null;
+function edadBanda(v){ const n = edadExacta(v); return n!==null ? [n,n] : (EDAD_BANDAS[v]||null); }
+function edadClave(v){ const n = edadExacta(v); if(n===null) return v||''; return Object.keys(EDAD_BANDAS).find(k=>n>=EDAD_BANDAS[k][0] && n<=EDAD_BANDAS[k][1]) || ''; }
 // Rangos de monto en millones [piso, techo] de lo que busca el cliente.
 const MONTO_BANDAS = {hasta50:[1,50],'50a100':[50,100],'100a150':[100,150],'150a250':[150,250],mas250:[251,251]};
 const NIVEL_REPORTE = {sin_reporte:'ninguno',coop_mora:'leve',fin_leve:'leve',fin_medio:'alto',fin_alto:'alto'};
@@ -3073,7 +3079,7 @@ function evaluarReglaCX(e, s){
   const tipo = s.tipo_cliente||'';
   const valores = {
     vinculacion:s.vinculacion||'', antiguedad_doc:s.antiguedad_doc||'',
-    reporte:s.reporte||'', embargo:s.embargo||'', edad:s.edad||'',
+    reporte:s.reporte||'', embargo:s.embargo||'', edad:edadClave(s.edad),
     tipo_pension:s.tipo_pension||'', pagaduria:s.pagaduria||'', tipo_cliente:tipo,
   };
   const soloDocente = ['vinculacion','antiguedad_doc'];
@@ -3087,6 +3093,7 @@ function evaluarReglaCX(e, s){
     if(neg){
       if(vals.includes(cli)) return {ok:false, motivo:'Regla Credixpertos: no aplica con '+campo+' = '+cli};
     } else if(!vals.includes(cli)){
+      if(campo==='edad'){ const et={menos65:'menos de 65 años','65a70':'65 a 70 años','71a75':'71 a 75 años','76a79':'76 a 79 años','80a84':'80 a 84 años',mas84:'85 años o más'}; return {ok:false, motivo:'Regla Credixpertos: solo para clientes de '+vals.map(v=>et[v]||v).join(' o ')}; }
       return {ok:false, motivo:'Regla Credixpertos: solo aplica con '+campo+' = '+vals.join(' o ')};
     }
   }
@@ -3134,7 +3141,7 @@ function evaluarPerfil(s, pols, pags){
   const necesidad = s.necesidad||'';
   const tagsOk = tipo==='docente' ? ['docente','mixto'] : ['pension','militar','mixto'];
   const nivel = NIVEL_REPORTE[reporte]||'ninguno';
-  const eb = EDAD_BANDAS[edad]||null;
+  const eb = edadBanda(edad);
   const mb = MONTO_BANDAS[s.monto||'']||null;
   const notas = [];
   const base = {recs:[], otras:[], descartadas:[], notas, rechazado:false, msgRec:'', condsRec:[], pagNombre:'', critKey:''};
@@ -3186,7 +3193,7 @@ function evaluarPerfil(s, pols, pags){
     // Edad
     const tope = topeEdad(e);
     if(eb){
-      if(eb[0] > tope) return {motivo:'Edad máxima '+tope+' años'+(tope!==e.edad_max?' para docentes':'')+': el cliente tiene '+eb[0]+' o más'};
+      if(eb[0] > tope) return {motivo:'Edad máxima '+tope+' años'+(tope!==e.edad_max?' para docentes':'')+': el cliente tiene '+eb[0]+(eb[0]===eb[1]?'':' o más')};
       if(eb[1] > tope) avisos.push('Edad máxima '+tope+' años'+(tope!==e.edad_max?' para docentes':'')+': confirmar la edad exacta del cliente.');
     }
 
@@ -3454,6 +3461,7 @@ function wizTextoResumen(){
   if(nombre) out.push('Cliente: ' + nombre);
   out.push('', 'PERFIL (lo que dijo el cliente)');
   pasosFiltrados.forEach(p=>{
+    if(p.tipo==='numero'){ if(s[p.id]) out.push('- ' + (WIZ_ETIQ[p.id]||p.id) + ': ' + s[p.id] + ' años'); return; }
     const o = opcionesDePaso(p, s.tipo_cliente).find(x=>x.val===s[p.id]);
     if(o) out.push('- ' + (WIZ_ETIQ[p.id]||p.id) + ': ' + (p.id==='pagaduria' ? o.label.replace(/\s*\(.*\)\s*$/,'') : o.label));
   });
@@ -3510,7 +3518,7 @@ function wizRestaurarDesdeLink(){
   const m = location.hash.match(/^#w=(.*)$/); if(!m) return;
   let params; try{ params = new URLSearchParams(decodeURIComponent(m[1])); }catch(e){ return; }
   const estado = {};
-  PASOS.forEach(p=>{ const v = params.get(p.id); if(v && opcionesDePaso(p, estado.tipo_cliente||params.get('tipo_cliente')).some(o=>o.val===v)) estado[p.id] = v; });
+  PASOS.forEach(p=>{ const v = params.get(p.id); if(v && p.id==='edad' && (edadExacta(v)!==null || EDAD_BANDAS[v])){ estado.edad = v; return; } if(v && opcionesDePaso(p, estado.tipo_cliente||params.get('tipo_cliente')).some(o=>o.val===v)) estado[p.id] = v; });
   if(!estado.tipo_cliente) return;
   wizState = estado; wizPasoActual = 0; calcPasosFiltrados();
   wizPasoActual = pasosFiltrados.length;
