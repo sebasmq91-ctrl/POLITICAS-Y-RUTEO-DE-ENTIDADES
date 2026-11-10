@@ -2015,7 +2015,7 @@ function capSaldoItem(i, inp){
 }
 function capAgregarExtra(){ capExtras.push({n:'', v:0}); capPintarExtras(); const ins = document.querySelectorAll('#cap-extras .cap-extra input'); if(ins.length>1) ins[ins.length-2].focus(); }
 function capQuitarExtra(i){ capExtras.splice(i,1); capPintarExtras(); capTotalCompras(); }
-function capExtraNombre(i, inp){ capExtras[i].n = inp.value; }
+function capExtraNombre(i, inp){ capExtras[i].n = inp.value; if(capExtras[i].v>0) capTotalCompras(); }
 function capExtraValor(i, inp){ const v = parseInt(inp.value.replace(/[^\d]/g,''),10) || 0; capExtras[i].v = v; inp.value = capFmtPesos(v); capTotalCompras(); }
 function capPintarExtras(){
   const box = document.getElementById('cap-extras'); if(!box) return;
@@ -2058,7 +2058,7 @@ function capAplicarDescuentos(){
 
 
 // Excelcredit: simulador ágil del portal (oct 2026). Fianza 18,9 % + IVA, seguro 4.625 por millón, 30 días de incorporación.
-const LIQ_EXCEL = { iva:1.19, fianza:0.189, seguro:4625, estudio:119000, polizaAP:170000, gmf:0.004, plazoMax:144, edadMax:80, edadMaxDoc:65, montoMax:150000000,
+const LIQ_EXCEL = { iva:1.19, fianza:0.189, fianzaRefi:0.0945, seguro:4625, estudio:119000, polizaAP:170000, gmf:0.004, plazoMax:144, edadMax:80, edadMaxDoc:65, montoMax:150000000,
   margen:{colpensiones:2500,fopep:2500,fiduprevisora:2500,cagen_tegen:20000,mindefensa:20000,casur:10000,cremil:10000,sed:10000,'Colfondos':20000,_fondo:10000} };
 function capExcelcredit(c){
   const L = LIQ_EXCEL, out = [];
@@ -2067,8 +2067,12 @@ function capExcelcredit(c){
   if(c.pag==='fondos_priv' && !normTxt(e.pagadurias).includes(normTxt(c.fondo))) return out;
   const margen = c.margen!=null ? c.margen : (c.pag==='fondos_priv' ? (L.margen[c.fondo]||L.margen._fondo) : (L.margen[c.pag]!=null ? L.margen[c.pag] : 10000));
   const tasa = parseFloat(document.getElementById('cap-tasa-excel').value);
-  const base = {nombre:'Excelcredit · tasa '+capPct(tasa), entidad:'EXCELCREDIT', margen, costosTxt:'Fianza, estudio, póliza AP, intereses y seguro de incorporación'};
+  // Refinanciación: si se compra un crédito de Excelcredit (de la colilla o agregado a mano), la fianza baja a la mitad sobre todo el crédito.
+  const refi = capDescLeidos.some(d=>d.compra && /EXCEL/i.test(d.n)) || (capExtras||[]).some(x=>x.v>0 && /EXCEL/i.test(x.n||''));
+  const fianza = refi ? L.fianzaRefi : L.fianza;
+  const base = {nombre:'Excelcredit · tasa '+capPct(tasa)+(refi?' · refinanciación':''), entidad:'EXCELCREDIT', margen, costosTxt:'Fianza'+(refi?' de refinanciación':'')+', estudio, póliza AP, intereses y seguro de incorporación'};
   const avisos = ['Tasa sujeta al estudio de Excelcredit.'];
+  if(refi) avisos.push('Refinanciación de Excelcredit: la fianza baja a 9,45 % + IVA sobre todo el crédito.');
   if(c.pag==='casur' || c.pag==='cremil'){
     if(c.score!=null && c.score<550) return [{...base, error:'CASUR y CREMIL: con score menor a 550 no es viable.'}];
     if(tasa>=0.0176) return [{...base, error:'CASUR y CREMIL: con tasa de 1,76 % o más no es sujeto de crédito.'}];
@@ -2085,7 +2089,7 @@ function capExcelcredit(c){
   let monto = cuota/(fac+seg), cuotaUsada = cuota;
   if(monto>L.montoMax){ monto = L.montoMax; cuotaUsada = monto*(fac+seg); avisos.push('Monto limitado al tope de la entidad.'); }
   const segInc = monto*seg, intInc = (monto-segInc)*tasa/(1+tasa);
-  const costos = intInc + segInc + monto*L.fianza*L.iva + L.estudio + L.polizaAP + L.polizaAP*L.gmf;
+  const costos = intInc + segInc + monto*fianza*L.iva + L.estudio + L.polizaAP + L.polizaAP*L.gmf;
   out.push({...base, cuota:cuotaUsada, tasa, plazo:n, monto, costos, desembolso: monto - costos - c.compras, avisos});
   return out;
 }
