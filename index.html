@@ -583,6 +583,28 @@ tr.cap-var td{background:#F8FAFC}
 .slip-res .sl-ley{background:#EFF6FF;color:#1E40AF}.slip-res .sl-libranza{background:#ECFDF5;color:#065F46}.slip-res .sl-embargo{background:#FEF2F2;color:#B91C1C}
 @media (max-width:640px){.slip-pag{font-size:19px}.slip-head{flex-wrap:wrap;gap:8px}.slip-tit{flex-basis:100%}.slip-per{text-align:left}.slip-cap{flex-basis:100%;text-align:left}}
 .wiz-edad{display:flex;align-items:center;gap:12px;margin:6px 0 4px}.wiz-edad input{width:160px;font-size:26px;font-weight:700;padding:12px 16px;border:2px solid #CBD5E0;border-radius:12px;font-family:inherit;color:#072B30}.wiz-edad input:focus{outline:none;border-color:#12CBE3}.wiz-edad span{font-size:18px;font-weight:600;color:#4A5568}
+.cert-gen{background:#FFF6EC;border:1px solid #F2C79B;color:#7A3E00;border-radius:10px;padding:12px 16px;font-size:14px;line-height:1.5;margin-bottom:14px}
+.cert-bar{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:14px}
+.cert-bar input{flex:1;min-width:220px;max-width:460px;padding:10px 14px;border:1.5px solid #CBD5E0;border-radius:10px;font-size:14px;font-family:inherit}
+.cert-bar span{font-size:13px;color:#6B7280}
+.cert-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:14px}
+.cert-card{background:#fff;border:1px solid #D9E2EC;border-radius:12px;padding:16px 18px;display:flex;flex-direction:column;gap:10px;min-width:0}
+.cert-h{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.cert-h h3{margin:0;font-size:17px;color:var(--dark)}
+.cert-q{font-size:11.5px;font-weight:700;border-radius:999px;padding:3px 10px;background:#EEF2F6;color:#374151;white-space:nowrap}
+.cert-q-cliente{background:#FFF1D6;color:#7A3E00}.cert-q-asesor{background:#E0F7FA;color:#055B66}.cert-q-ambos{background:#EDE9FE;color:#4C1D95}
+.cert-medio{font-size:14px;font-weight:600;word-break:break-word}.cert-medio a{color:var(--cx-d)}
+.cert-kv{display:grid;grid-template-columns:1fr 1fr;gap:8px 14px}
+.cert-kv div:last-child{grid-column:1/-1}
+.cert-kv span{display:block;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.3px;color:#6B7280}
+.cert-kv b{font-size:13.5px;color:#1F2937}
+.cert-obs{margin:0;font-size:13.5px;line-height:1.5;color:#374151}
+.cert-extra{font-size:13px;font-weight:700;color:var(--cx-d)}
+.cert-vacio{color:#6B7280}
+.slip small.sl-cert{display:block;font-size:11.5px;color:#065F46;margin-top:3px;line-height:1.45}
+.slip small.sl-cert a{color:#0A7F8F;font-weight:700}
+.slip-cert-gen{margin:10px 18px 0;background:#FFF6EC;border:1px solid #F2C79B;color:#7A3E00;border-radius:8px;padding:7px 10px;font-size:12.5px}
+.ch-cert-gen{font-size:12.5px;color:#7A3E00;background:#FFF6EC;border-radius:6px;padding:6px 10px;margin:0 0 8px}
 .cap-step{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:800;color:var(--dark);text-transform:uppercase;letter-spacing:.4px;margin:16px 0 10px;padding-top:12px;border-top:1px solid #E5E7EB}
 .cap-step:first-child{margin-top:0;padding-top:0;border-top:0}
 .cap-wiz-aviso + .cap-step{margin-top:0;padding-top:0;border-top:0}
@@ -713,6 +735,7 @@ tr.cap-var td{background:#F8FAFC}
       <button class="tab-btn" onclick="showTab('capacidad',this)">Capacidad y Monto</button>
       <button class="tab-btn" onclick="showTab('ruteo',this)">Consultar por Pagaduría</button>
       <button class="tab-btn" onclick="showTab('politicas',this)">Políticas por Entidad</button>
+      <button class="tab-btn" onclick="showTab('certificados',this)">Certificados de deuda</button>
     </div>
   </div>
 </div>
@@ -874,6 +897,13 @@ tr.cap-var td{background:#F8FAFC}
     <button class="fbtn fd" onclick="filtrarP('docente','tag',this)">Docentes SEDs</button>
   </div>
   <div id="pol-grid" class="pol-grid" style="margin-top:4px"></div>
+</div>
+
+<!-- ══ CERTIFICADOS DE DEUDA ══ -->
+<div id="sec-certificados" class="section">
+  <div class="cert-gen"><b>Observación general:</b> ten en cuenta la pagaduría del cliente. En pagadurías donde la visación es en plataforma (CASUR, CREMIL), los certificados de deuda se solicitan 3 o 4 días antes de la apertura de la plataforma, en el cierre del negocio.</div>
+  <div class="cert-bar"><input id="cert-q" type="search" placeholder="Busca la entidad: Excelcredit, BAN100, Kala, banco…" oninput="certPintar()"><span id="cert-n"></span></div>
+  <div id="cert-grid" class="cert-grid"></div>
 </div>
 
 <!-- ══ CAPACIDAD Y MONTO ══ -->
@@ -1133,6 +1163,45 @@ function renderPolicies() {
 }
 
 // ── TABS ──────────────────────────────────────────────────────────────────────
+// ── CERTIFICADOS DE DEUDA (cómo pedirlos por entidad, nov 2026) ──
+const CERT_GENERAL = 'En pagadurías donde la visación es en plataforma (CASUR, CREMIL), los certificados de deuda se solicitan 3 o 4 días antes de la apertura de la plataforma, en el cierre del negocio.';
+const CERTIFICADOS = [
+  {ent:'Excelcredit', re:/EXCEL\s*CRED/i, medio:'WhatsApp', dato:'315 770 6670', link:'https://wa.me/573157706670', quien:'Cliente', resp:'8 días hábiles', vence:'10 días hábiles', momento:'Al cierre con la analista (estación 2)',
+   obs:'La solicitud se debe hacer desde el WhatsApp del titular del crédito; es un paso a paso muy sencillo. Si el cliente no es capaz o está enredado, hacer videollamada, que comparta pantalla y se le va guiando. Si el cliente no tiene los datos actualizados, ese mismo WhatsApp tiene la opción de actualizarlos.'},
+  {ent:'BAN100', re:/BAN\s*100/i, medio:'Página web', dato:'zonavirtual.ban100.com.co', link:'https://zonavirtual.ban100.com.co:20110/Front/', quien:'Asesor', resp:'8 días hábiles', vence:'4 a 5 días hábiles', momento:'Antes de radicar (estación 3)',
+   obs:'Ver el video. El asesor puede hacer lo inicial; cuando llegue a la validación de identidad, le envía el link al cliente para que la haga y siga los pasos del video.', extra:{t:'Video del paso a paso', u:'https://www.youtube.com/watch?v=RCKc9R2zWM0'}},
+  {ent:'Avista', re:/AVISTA/i, medio:'Página web', dato:'avista.co/servicioalcliente', link:'https://avista.co/servicioalcliente/', quien:'Asesor', resp:'1 o 2 días hábiles', vence:'5 o 6 días hábiles', momento:'Antes de radicar (estación 3)',
+   obs:'Ingresar al link y seleccionar certificado de deuda. Tener a la mano la información básica del cliente, con dirección. En las preguntas de abajo, seleccionar las respuestas de la imagen de referencia.'},
+  {ent:'Bayport', re:/BAY\s*PORT|BAYRPORT/i, medio:'Página web', dato:'apertu.com.co', link:'https://apertu.com.co/', quien:'Asesor', resp:'1 o 2 días hábiles (cuando el cliente paga el PIN de $70.000)', vence:'5 a 6 días hábiles', momento:'Antes de radicar (estación 3)',
+   obs:'Se debe crear el usuario en el portal de clientes. Si el cliente no tiene los datos actualizados, se hace desde la misma página. Al ingresar se selecciona certificado de deuda y se genera un PIN que cuesta $70.000 y lo asume el cliente: se le envía el PIN para que lo pague en Bancolombia.'},
+  {ent:'Kala', re:/KALA/i, medio:'Página web', dato:'kalacredito.com/portal-autogestion', link:'https://www.kalacredito.com/portal-autogestion', quien:'Asesor', resp:'El mismo día', vence:'Hasta 20 días', momento:'Antes de radicar (estación 3)',
+   obs:'Seguir el paso a paso de la página. Si el cliente no tiene los datos actualizados, debe llamar al teléfono que dice la página o mandar un correo a servicio al cliente.'},
+  {ent:'Coinvertex', re:/COINVERTEX/i, medio:'En oficina de Coinvertex', dato:'', link:'', quien:'Cliente', resp:'15 días', vence:'El mismo día', momento:'Antes de radicar (estación 3)',
+   obs:'Se debe solicitar antes del 9 de cada mes para que llegue entre el 20 y el 22 del mismo mes. El cliente debe llevar una carta de solicitud del certificado de deuda con cédula y colilla de pago. Si el cliente está en otra ciudad, podemos llevar los documentos a la oficina de Coinvertex en Medellín.'},
+  {ent:'Kredit', re:/KREDIT/i, medio:'Página web', dato:'nova.kredit.com.co', link:'https://nova.kredit.com.co/seas/pasarelaCertificadosDeudas.php', quien:'Asesor', resp:'Condicionado', vence:'5 días hábiles', momento:'Antes de radicar (estación 3)',
+   obs:'Si el cliente lleva mucho tiempo en la entidad, el certificado lo envían al día siguiente. Si la cartera es reciente, debe pagar $45.000 y enviar el comprobante al correo donde le llegó el radicado; a los 5 días le envían el certificado.'},
+  {ent:'Soempresarial', re:/SO\s*EMPRESARIAL|SOEMRPESARIAL/i, medio:'Página web', dato:'soempresarial.com', link:'https://soempresarial.com/solicitudes/certificado-deuda/', quien:'Ambos', resp:'Lo que indique la página', vence:'3 días hábiles', momento:'Antes de radicar (estación 3)',
+   obs:'Preferiblemente que el cliente vaya a la oficina de Soempresarial a hacer la solicitud. Si no, seguir el paso a paso de la página.'},
+  {ent:'Todos los bancos', re:/\bBANCO|\bBCO\b|^BAN(?!\s*100)|SUDAMERIS|\bGNB|BBVA|DAVIVIENDA|POPULAR|OCCIDENTE|PICHINCHA|AV\s*VILLAS|BANCOLOMBIA|CAJA SOCIAL|AGRARIO|FALABELLA|SCOTIA|COLPATRIA|ITA[UÚ]|FINANDINA|SERFINANZA|MUNDO MUJER|BOGOT[AÁ]/i, medio:'El cliente debe ir al banco', dato:'', link:'', quien:'Cliente', resp:'8 días hábiles', vence:'3 días hábiles', momento:'Al cierre con la analista (estación 2)',
+   obs:'Ojo: al cliente le hacen una retención muy fuerte en el banco Sudameris si tiene menos de 75 años. Preparar muy bien al cliente para que no se quede en Sudameris.'}
+];
+function certDe(nombre){ const n = String(nombre||''); return CERTIFICADOS.find(c=>c.re.test(n)) || null; }
+function certMedioHtml(c){
+  if(c.link) return `<a href="${c.link}" target="_blank" rel="noopener">${capEsc(c.medio)}${c.dato?': '+capEsc(c.dato):''}</a>`;
+  return capEsc(c.medio)+(c.dato?': '+capEsc(c.dato):'');
+}
+function certPintar(){
+  const q = normTxt(document.getElementById('cert-q').value||'');
+  const lista = CERTIFICADOS.filter(c=>!q || normTxt(c.ent+' '+c.obs+' '+c.medio).includes(q));
+  document.getElementById('cert-n').textContent = lista.length+' de '+CERTIFICADOS.length+' entidades';
+  document.getElementById('cert-grid').innerHTML = lista.map(c=>`<div class="cert-card">
+    <div class="cert-h"><h3>${capEsc(c.ent)}</h3><span class="cert-q cert-q-${normTxt(c.quien)}">Lo pide: ${capEsc(c.quien)}</span></div>
+    <div class="cert-medio">${certMedioHtml(c)}</div>
+    <div class="cert-kv"><div><span>Responden en</span><b>${capEsc(c.resp)}</b></div><div><span>La carta vence en</span><b>${capEsc(c.vence)}</b></div><div><span>Cuándo se pide</span><b>${capEsc(c.momento)}</b></div></div>
+    <p class="cert-obs">${capEsc(c.obs)}</p>
+    ${c.extra?`<a class="cert-extra" href="${c.extra.u}" target="_blank" rel="noopener">${capEsc(c.extra.t)}</a>`:''}
+  </div>`).join('') || '<p class="cert-vacio">No hay entidades con esa búsqueda. Si la entidad no está, pide la información a tu coordinador.</p>';
+}
 function capIrTab(name){ const b=[...document.querySelectorAll('.tab-btn')].find(x=>(x.getAttribute('onclick')||'').includes("'"+name+"'")); if(b) showTab(name,b); window.scrollTo(0,0); }
 function showTab(name,btn) {
   if (name === 'wizard') { setTimeout(()=>{ if(!document.getElementById('wiz-content').innerHTML.trim()) initWizard(); },50); }
@@ -1140,6 +1209,7 @@ function showTab(name,btn) {
   document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
   btn.classList.add('active');
   document.getElementById('sec-'+name).classList.add('active');
+  if(name==='certificados') certPintar();
 }
 // ── FILTERS ───────────────────────────────────────────────────────────────────
 function filtrarR(tag,btn) {
@@ -1978,7 +2048,7 @@ function capPintarLeido(){
       : `<tr><td>${capEsc(r.tipo ? 'Ingreso base · '+r.tipo : 'Ingreso base')}</td><td class="sl-num">${capPesos(r.ingreso)}</td></tr>`)
     + (r.otrosDev||[]).map(d=>`<tr class="sl-gris"><td>${capEsc(d.n)} <small>no suma al ingreso</small></td><td class="sl-num">${capPesos(d.v)}</td></tr>`).join('');
   const dedFilas = capDescLeidos.map((d,i)=>`<tr class="cap-desc sl-${d.tipo}${d.compra?' sl-compra':''}">
-      <td><span class="sl-marca"></span>${capEsc(d.n)}${d.cuotas?`<small class="sl-cuo-m">${d.cuotas} cuotas pendientes</small>`:''}${d.unaVez?' <small>solo este mes</small>':''}${d.saldo?`<small>Saldo en colilla ${capPesos(d.saldo)}</small>`:''}</td>
+      <td><span class="sl-marca"></span>${capEsc(d.n)}${d.compra?(()=>{ const ce = certDe(d.n); return ce ? `<small class="sl-cert">Certificado: ${certMedioHtml(ce)} · lo pide ${capEsc(ce.quien.toLowerCase())} · responden en ${capEsc(ce.resp)} · vence en ${capEsc(ce.vence)} · <a href="#" onclick="capIrTab('certificados');document.getElementById('cert-q').value='${ce.ent.replace(/'/g,'')}';certPintar();return false;">ver cómo</a></small>` : `<small class="sl-cert">Certificado: entidad sin instructivo, pregúntale a tu coordinador.</small>`; })():''}${d.cuotas?`<small class="sl-cuo-m">${d.cuotas} cuotas pendientes</small>`:''}${d.unaVez?' <small>solo este mes</small>':''}${d.saldo?`<small>Saldo en colilla ${capPesos(d.saldo)}</small>`:''}</td>
       <td class="sl-cuo">${d.cuotas?d.cuotas:''}</td>
       <td><select onchange="capDescLeidos[${i}].tipo=this.value;if(this.value!=='libranza')capDescLeidos[${i}].compra=false;capPintarLeido();capAplicarDescuentos()">${Object.entries(TIPOS_DESC).map(([k,v])=>`<option value="${k}" ${d.tipo===k?'selected':''}>${v}</option>`).join('')}</select></td>
       <td class="sl-num">${capPesos(d.v)}</td>
@@ -1997,6 +2067,7 @@ function capPintarLeido(){
       <tbody>${dedFilas || '<tr><td colspan="6">No tiene deducciones.</td></tr>'}</tbody>
       <tfoot><tr><td colspan="3">Total deducciones</td><td class="sl-num">${capPesos(totDed)}</td><td colspan="2"></td></tr>
         <tr class="slip-neto"><td colspan="3">Neto a pagar</td><td class="sl-num">${capPesos(totDev-totDed)}</td><td colspan="2"></td></tr></tfoot></table></div>
+    ${(pag==='casur'||pag==='cremil') && capDescLeidos.some(d=>d.compra) ? `<div class="slip-cert-gen">${CERT_GENERAL}</div>` : ''}
     <div class="slip-res"><span class="sl-ley">De ley <b>${capPesos(tot('ley'))}</b></span><span class="sl-fijo">Se quedan <b>${capPesos(tot('fijo')+tot('libranza')-comp)}</b></span><span class="sl-libranza">Se compran <b>${capPesos(comp)}</b></span>${tot('embargo')?`<span class="sl-embargo">Embargos <b>${capPesos(tot('embargo'))}</b></span>`:''}</div>
   </div>`;
   capPintarCapSlip();
@@ -2717,6 +2788,10 @@ function capPintarHoja(){
       ${it('Norma aplicada', capNormaNom(c.norma), capNormaSub(c.norma))}
       ${it('Pagaduría', capEsc(pagTxt), c.edad+' años · ingreso '+capPesos(c.ingreso))}
     </div>
+    ${(()=>{ const items = [...compras.map(d=>d.n), ...extras.map(x=>x.n)].map(n=>({n, ce:certDe(n)})); if(!items.length) return '';
+      const gen = (c.pag==='casur'||c.pag==='cremil') ? `<p class="ch-cert-gen">${CERT_GENERAL}</p>` : '';
+      return `<div class="ch-sec"><h3>Certificados de deuda a pedir</h3>${gen}<table class="ch-tab"><thead><tr><th>Obligación</th><th>Cómo se pide</th><th>Lo pide</th><th>Responden</th><th>Vence</th></tr></thead><tbody>
+        ${items.map(({n,ce})=>`<tr><td>${capEsc(n||'Cartera')}</td>${ce?`<td>${certMedioHtml(ce)}</td><td>${capEsc(ce.quien)}</td><td>${capEsc(ce.resp)}</td><td>${capEsc(ce.vence)}</td>`:'<td colspan="4">Sin instructivo: pregúntale a tu coordinador.</td>'}</tr>`).join('')}</tbody></table></div>`; })()}
     ${compras.length || extras.length ? `<div class="ch-sec"><h3>Carteras y saneamientos que se recogen</h3>
       <table class="ch-tab"><thead><tr><th>Obligación</th><th style="text-align:right">Cuota en colilla</th><th>Saldo a recoger</th></tr></thead><tbody>
       ${compras.map(d=>`<tr><td>${capEsc(d.n)}</td><td style="text-align:right">${capPesos(d.v)}</td><td>${d.saldoCompra?capPesos(d.saldoCompra):'Por definir'}</td></tr>`).join('')}
