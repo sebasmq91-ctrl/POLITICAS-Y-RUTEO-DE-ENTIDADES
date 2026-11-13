@@ -1899,6 +1899,41 @@ function capParseAxa(lineasTxt){
     aviso: avisos.join(' ')};
 }
 
+// Colilla de pago de pensionados de Asulado Seguros de Vida (renta vitalicia, formato propio de Asulado).
+function capParseAsulado(lineas){
+  const iHead = lineas.findIndex(l=>/Conceptos Liquidados/i.test(capTxt(l)) && l.items.some(i=>/^Descuentos$/i.test(i.t.trim())));
+  if(iHead<0) return null;
+  const hd = lineas[iHead].items;
+  const xPag = (hd.find(i=>/^Pagos$/i.test(i.t.trim()))||{x:330}).x, xDes = hd.find(i=>/^Descuentos$/i.test(i.t.trim())).x, mid = (xPag+xDes)/2;
+  const numCO = t => parseInt(String(t).replace(/\./g,''),10)||0;
+  const ing = [], ded = []; let totD = null, neto = null;
+  for(let k=iHead+1;k<lineas.length;k++){
+    const l = lineas[k], t = capTxt(l).replace(/\s+/g,' ').trim(); let m;
+    if((m = t.match(/^Total Descuentos\s+([\d.]+)$/i))){ totD = numCO(m[1]); continue; }
+    if((m = t.match(/^TOTAL NETO A PAGAR\s+([\d.]+)$/i))){ neto = numCO(m[1]); break; }
+    const nums = l.items.filter(i=>/^[\d.]+$/.test(i.t.trim()) && i.x>=xPag-80);
+    if(!nums.length) continue;
+    const n = l.items.filter(i=>!nums.includes(i)).map(i=>i.t).join(' ').replace(/\s+/g,' ').trim();
+    if(!n) continue;
+    for(const it of nums){ const v = numCO(it.t.trim()); if(!v) continue;
+      (it.x+(it.w||0) > mid ? ded : ing).push({n, v}); }
+  }
+  if(!ing.length) return null;
+  const todo = lineas.map(capTxt).join(' ');
+  const base = ing.filter(d=>/MESADA/i.test(d.n)); const ingreso = (base.length?base:ing).reduce((a,d)=>a+d.v,0);
+  const sumD = ded.reduce((a,d)=>a+d.v,0);
+  const cuadra = (totD==null || Math.abs(totD-sumD)<=1) && (neto==null || Math.abs(ing.reduce((a,d)=>a+d.v,0)-sumD-neto)<=1);
+  const per = todo.match(/Periodo de pago[\s\S]{0,80}?\b(20\d{2})-(\d{2})\b/i), MES = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+  const avisos = [];
+  if(!cuadra) avisos.push('Los totales leídos no cuadran con la suma de los conceptos: revisa los valores contra la colilla.');
+  const est = (todo.match(/Estado de la mesada[\s\S]{0,60}?\b20\d{2}-\d{2}\s+([A-Za-zÁÉÍÓÚáéíóú]+)/i)||[])[1]||'';
+  if(est && !/^activ/i.test(est)) avisos.push('La mesada aparece en estado "'+est+'": confirma con Asulado antes de radicar.');
+  return {pagaduria:'fondos_priv', fondo:'Asulado', ingreso, otrosDev: ing.filter(d=>base.length && !base.includes(d)), lineas: ded,
+    tipo: 'Asulado Seguros de Vida',
+    periodo: per ? MES[parseInt(per[2],10)-1]+' de '+per[1] : '',
+    aviso: avisos.join(' ')};
+}
+
 // Nombre y cédula del cliente según el formato de la colilla. Solo se muestran en pantalla; no se guardan.
 function capDatosCliente(lineas){
   const L = lineas.map(l=>String(l).replace(/\s+/g,' ').trim()), todo = L.join(' ');
@@ -1906,6 +1941,7 @@ function capDatosCliente(lineas){
   const prueba = [
     [/Nombre Completo:\s*(.+?)\s+Tipo y N[uú]mero de Identificaci[oó]n:\s*(?:[A-Z]{1,3}\.?\s*)?([\d.]{6,14})/i, 1, 2],
     [/se[ñn]or\s*\(a\)\s+(.+?)\s+identificad[oa]\s*\(a\)\s+con\s+(?:la\s+)?(?:tipo de documento\s+)?C[eé]dula de Ciudadan[ií]a\s+(?:No\.?\s*|n[uú]mero\s*)?([\d.]{6,14})/i, 1, 2],
+    [/Identificaci[oó]n CC-?\s*\d{6,11}\s+Identificaci[oó]n CC-?\s*(\d{6,11})\s+Nombre\s+[A-ZÁÉÍÓÚÑ ]+?\s+Nombre\s+([A-ZÁÉÍÓÚÑ][A-ZÁÉÍÓÚÑ ]{4,}?)\s+Valor de mesada/, 2, 1],
     [/\bNombre\s+([A-ZÁÉÍÓÚÑ][A-ZÁÉÍÓÚÑ ]{4,}?)\s+Documento\s+(\d{6,11})/, 1, 2],
     [/NOMBRE:\s*([A-ZÁÉÍÓÚÑ][A-ZÁÉÍÓÚÑ ]{4,}?)\s+(?:\|\s*)?FECHA DE EXPEDICI[\s\S]{0,400}?IDENTIFICACI[OÓ]N:?\s*(\d{6,11})/, 1, 2],
     [/Apellidos y nombres:\s*(.+?)\s+Documento de identidad:\s*(\d{6,11})/i, 1, 2],
@@ -2021,6 +2057,7 @@ async function capLeerColilla(file){
     else if(/Protecci[oó]n/i.test(todo) && /Descuentos Mesada/i.test(todo)) r = capParseProteccion(lineas.map(capTxt));
     else if(/CAJA DE RETIRO DE LAS FUERZAS MILITARES/i.test(todo)) r = capParseCremil(lineas.map(capTxt));
     else if(/AXA COLPATRIA/i.test(todo)) r = capParseAxa(lineas.map(capTxt));
+    else if(/ASULADO/i.test(todo) && /Conceptos Liquidados/i.test(todo)) r = capParseAsulado(lineas);
     else if(/Suramericana/i.test(todo) && /Deducciones/i.test(todo)) r = capParseSura(lineas);
     else if(/DEVENGO/i.test(todo) && /DEDUCIDO/i.test(todo) && /PENSIONADO/i.test(todo)) r = capParseDevengoDeducido(lineas);
     else if(/CASUR|Valor Asignaci/i.test(todo) && /Descripci.n de la deducci/i.test(todo)) r = capParseCasur(lineas);
@@ -2030,7 +2067,7 @@ async function capLeerColilla(file){
       box.innerHTML='Leyendo la colilla con reconocimiento de texto (puede tardar unos segundos)...';
       const o = await capOcrPdf(file); txt = o.lo; r = o.r;
     }
-    if(!r) throw new Error('Todavía no reconozco el formato de esta colilla. Por ahora leo Colpensiones, FOPEP, Fiduprevisora, CASUR, CAGEN/TEGEN, Mindefensa (DIVRI), Seguros Alfa, Sura, Protección, AXA Colpatria, CREMIL y secretarías de educación con Humano en Línea; digita los valores a mano.');
+    if(!r) throw new Error('Todavía no reconozco el formato de esta colilla. Por ahora leo Colpensiones, FOPEP, Fiduprevisora, CASUR, CAGEN/TEGEN, Mindefensa (DIVRI), Seguros Alfa, Sura, Asulado, Protección, AXA Colpatria, CREMIL y secretarías de educación con Humano en Línea; digita los valores a mano.');
     document.getElementById('cap-pag').value = r.pagaduria; capCambioPag();
     if(r.pagaduria==='fondos_priv' && r.fondo) document.getElementById('cap-fondo').value = r.fondo;
     if(r.pagaduria==='sed'){
