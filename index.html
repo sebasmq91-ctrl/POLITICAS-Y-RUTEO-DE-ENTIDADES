@@ -724,6 +724,9 @@ tr.fila-propia > td{background:#EEF3FC !important}
 tr.fila-propia > td:first-child{box-shadow:inset 4px 0 0 #0B2A6B}
 .card-title-row .ent-propia{background:#fff;color:#0B2A6B}
 .pol-card.pol-propia{border:2px solid #0B2A6B !important;box-shadow:0 4px 16px rgba(11,42,107,.14)}
+.cap-monto-row{display:flex;gap:6px}.cap-monto-row input{flex:1;min-width:0}
+.cap-monto-x{border:1px solid #D0E8E8;background:#fff;color:#0A7F8F;border-radius:8px;padding:0 10px;font-size:12px;font-weight:600;cursor:pointer}
+.cap-monto-x:hover{background:#EEF9F9}
 </style>
 </head>
 <body>
@@ -955,6 +958,9 @@ tr.fila-propia > td:first-child{box-shadow:inset 4px 0 0 #0B2A6B}
         <div class="cap-f"><label>Edad</label><input id="cap-edad" type="number" min="18" max="110" placeholder="Años" oninput="capCalcular()"></div>
         <div class="cap-f"><label>Plazo (meses)</label><input id="cap-plazo" type="number" min="12" max="180" value="144" oninput="capCalcular()"></div>
       </div>
+      <div class="cap-f"><label>Monto del crédito <span class="cap-help" tabindex="0" data-tip="Déjalo vacío para ver el máximo de cada entidad. Si el cliente no quiere todo, escribe el monto: cada entidad recalcula cuota, costos y desembolso con ese valor y el plazo de arriba.">?</span></label>
+        <div class="cap-monto-row"><input id="cap-monto" inputmode="numeric" placeholder="Máximo de cada entidad" oninput="capMontoFmt(this)"><button type="button" class="cap-monto-x" onclick="capMontoLimpiar()" title="Volver al máximo">Máximo</button></div>
+        <small id="cap-monto-txt">Vacío: se muestra el máximo. Escríbelo si el cliente quiere menos.</small></div>
       <div class="cap-f2">
         <div class="cap-f"><label>Reportes en centrales</label>
         <select id="cap-rep" onchange="capCalcular()">
@@ -2017,7 +2023,7 @@ function capNuevoEstudio(){
   capDescLeidos = []; capColillaInfo = null; capExtras = []; capLeyAuto = null; capUltimo = null;
   const box = document.getElementById('cap-leido'); box.className = ''; box.innerHTML = '';
   const cv = document.getElementById('cap-colilla-vista'); if(cv) cv.innerHTML = ''; capCapSlip = null;
-  ['cap-ingreso','cap-ley','cap-actuales','cap-compras','cap-edad','cap-score','cap-antig','cap-margen','ch-in-nom','ch-in-ced','ch-in-tel','ch-in-obs'].forEach(id=>{ const el = document.getElementById(id); if(el) el.value = ''; });
+  ['cap-ingreso','cap-ley','cap-actuales','cap-compras','cap-monto','cap-edad','cap-score','cap-antig','cap-margen','ch-in-nom','ch-in-ced','ch-in-tel','ch-in-obs'].forEach(id=>{ const el = document.getElementById(id); if(el) el.value = ''; });
   const def = {'cap-pag':'colpensiones','cap-rep':'sin','cap-plazo':'144','cap-contrato':'propiedad','cap-sed':'Antioquia (Seduca)','cap-fondo':'Protección',
     'cap-norma':'auto','cap-orden':'sugerido','cap-prod-credia':'est','cap-tasa-proak':'0.0165','cap-perfil-proak':'p4','cap-tasa-excel':'0.0168','cap-tasa-ban100':'0.0146','cap-fga-ban100':'0.15','cap-tasa-pich':'1,33','cap-fintra-linea':'campana'};
   Object.entries(def).forEach(([id,v])=>{ const el = document.getElementById(id); if(el) el.value = v; });
@@ -2674,6 +2680,37 @@ function capFintra(c){
 
 // Regla Credixpertos: si la plata libre (después de costos y de las carteras) da menos de $1.000.000, el caso no pasa por ninguna entidad.
 const CAP_DESEMBOLSO_MIN = 1000000;
+// Monto pedido por el cliente: si escribe un monto menor al máximo, se busca la cuota que da ese monto
+// con el mismo plazo, para que cada entidad muestre sus costos y desembolso con ese valor.
+function capMontoFmt(inp){ const d = inp.value.replace(/[^\d]/g,''); inp.value = d ? '$ '+parseInt(d,10).toLocaleString('es-CO') : ''; capCalcular(); }
+function capMontoLimpiar(){ const el = document.getElementById('cap-monto'); if(el) el.value=''; capCalcular(); }
+function capMontoPedido(L, c){
+  const base = L(c), M = c.montoPedido;
+  if(!M || !base.length) return base;
+  // Cada entidad calcula su propia capacidad, así que se baja la cuota sumando un valor "d" a los descuentos que se quedan.
+  const igual = (r,f,k) => r.find(x=>x.nombre===f.nombre) || r[k];
+  const conD = (d,f,k) => igual(L({...c, actuales:c.actuales+d, cap:c.cap-d}), f, k);
+  const cubre = r => r && !r.error && r.monto>0 && (c.compras>0 ? r.desembolso>=0 : true);
+  const tope = Math.max(c.ingreso, 1);
+  return base.map((f,k)=>{
+    if(f.error || !(f.monto>0)) return f;
+    if(f.monto<=M) return {...f, avisos:[...(f.avisos||[]), 'No alcanza al monto pedido ('+capPesos(M)+'): este es el máximo.']};
+    let a = 0, b = tope, mejor = null;            // menor d con monto <= M
+    for(let it=0; it<45 && b-a>1; it++){
+      const mid = Math.floor((a+b)/2), r = conD(mid,f,k);
+      if(r && r.monto>0 && r.monto<=M){ b = mid; mejor = r; } else if(r && r.monto>M){ a = mid; } else { b = mid; }
+    }
+    if(cubre(mejor)) return {...mejor, avisos:[...(mejor.avisos||[]).filter(x=>!/tope de la entidad/i.test(x)), 'Calculado con el monto pedido. Máximo de la entidad: '+capPesos(f.monto)+'.']};
+    if(c.compras>0){
+      if(f.desembolso<0) return f;                // ni con el máximo alcanza: queda el mensaje de siempre
+      let a2 = 0, b2 = tope, minR = f;            // mayor d que todavía cubre compras y costos
+      for(let it=0; it<45 && b2-a2>1; it++){ const mid = Math.floor((a2+b2)/2), r = conD(mid,f,k); if(cubre(r)){ a2 = mid; minR = r; } else b2 = mid; }
+      return {...f, error:'Con '+capPesos(M)+' no alcanza a pagar las carteras y los costos. En esta entidad el mínimo es '+capPesos(minR.monto)+'.'};
+    }
+    return {...f, error: (mejor && mejor.error) || 'Con el monto pedido no da un crédito en esta entidad.'};
+  });
+}
+
 function capCalcular(){
   const box = document.getElementById('cap-tabla'); if(!box) return;
   const pag = document.getElementById('cap-pag').value;
@@ -2686,6 +2723,7 @@ function capCalcular(){
   document.getElementById('cap-norma-txt').textContent = sel==='auto' ? auto.r : (sel!==auto.n ? 'Norma elegida a mano. Por pagaduría aplicaría: '+capNormaNom(auto.n)+'.' : auto.r);
   c.norma = norma;
   c.cap = capCapacidad(norma, c.ingreso, c.ley, c.actuales);
+  c.montoPedido = capNum('cap-monto');
   c.embargo = capDescLeidos.some(d=>d.tipo==='embargo');
   capCapSlip = c.ingreso ? {cap:c.cap, norma} : null; capPintarCapSlip();
   const kp = document.getElementById('cap-kpis');
@@ -2697,11 +2735,13 @@ function capCalcular(){
     <div class="cap-kpi"><span>Pagaduría</span><b style="font-size:17px">${CAP_PAG_NOMBRE[pag]}${pag==='fondos_priv'?' · '+c.fondo:''}</b><small>${c.edad} años · ${c.plazo} meses</small></div>`;
   capScoreSolux(c); capFlagAjustes(pag);
   const _pols = loadData().pols;
-  const filas = [...capProaktivar(c), ...capValorenz(c), ...capSolux(c), ...capCredialianza(c), ...capExcelcredit(c), ...capSerfinanza(c), ...capBan100(c), ...capPichincha(c), ...capSudameris(c), ...capBogota(c), ...capSuenos(c), ...capVantage(c), ...capFintra(c)].map(f=>{
+  const filas = [capProaktivar, capValorenz, capSolux, capCredialianza, capExcelcredit, capSerfinanza, capBan100, capPichincha, capSudameris, capBogota, capSuenos, capVantage, capFintra].flatMap(L=>capMontoPedido(L, c)).map(f=>{
     const e = _pols.find(x=>x.entidad===f.entidad);
     if(c.embargo && e && e.embargo==='NO') return {...f, error:'No acepta embargo en colilla.'};
-    if(!f.error && f.desembolso<=0) return {...f, error: c.compras>0 ? 'El crédito no alcanza a cubrir las compras de cartera y los costos.' : 'La capacidad no alcanza para un crédito.'};
-    if(!f.error && f.desembolso<CAP_DESEMBOLSO_MIN) return {...f, error: c.compras>0 ? 'Después de pagar las carteras y los costos le quedan menos de $1.000.000 libres.' : 'El desembolso da menos de $1.000.000, el mínimo para radicar.'};
+    if(!f.error && c.compras>0 && f.desembolso<0) return {...f, error:'El crédito no alcanza a cubrir las compras de cartera y los costos.'};
+    if(!f.error && !c.compras && f.desembolso<=0) return {...f, error:'La capacidad no alcanza para un crédito.'};
+    // El mínimo de $1.000.000 libres aplica solo a libre inversión; con compra de cartera no aplica.
+    if(!f.error && !c.compras && f.desembolso<CAP_DESEMBOLSO_MIN) return {...f, error:'El desembolso da menos de $1.000.000, el mínimo para radicar en libre inversión.'};
     return f; });
   const {pags:_pg} = loadData();
   const filaM = _pg.find(p=>normTxt(p.nombre).includes(pag==='fondos_priv'?'fondos':(pag==='cagen_tegen'||pag==='mindefensa')?'cagen':pag==='sed'?'sed':pag));
